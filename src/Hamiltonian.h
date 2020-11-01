@@ -442,8 +442,8 @@ void Hamiltonian::InteractionsClusterCreate(int Center_site)
     for (int i = 0; i < ncells_cluster; i++)
     { // For each cell in cluster
 
-        i_posx = Coordinates_.indx_cellwise(i);
-        i_posy = Coordinates_.indy_cellwise(i);
+        i_posx = CoordinatesCluster_.indx_cellwise(i);
+        i_posy = CoordinatesCluster_.indy_cellwise(i);
 
         x_pos = Coordinates_.indx_cellwise(Center_site) - int(Parameters_.lx_cluster / 2) + CoordinatesCluster_.indx_cellwise(i);
         y_pos = Coordinates_.indy_cellwise(Center_site) - int(Parameters_.ly_cluster / 2) + CoordinatesCluster_.indy_cellwise(i);
@@ -456,7 +456,7 @@ void Hamiltonian::InteractionsClusterCreate(int Center_site)
 
         for(int orb=0;orb<n_orbs_;orb++){
 
-            index=Coordinates_.Nbasis(i_posx, i_posy, orb);
+            index=CoordinatesCluster_.Nbasis(i_posx, i_posy, orb);
 
             HamCluster_(index, index) += Parameters_.J_Hund[orb] * (cos(ei)) * 0.5 * MFParams_.Moment_Size(x_pos, y_pos);
             HamCluster_(index + ncells_cluster*n_orbs_, index + ncells_cluster*n_orbs_) += Parameters_.J_Hund[orb] * (-cos(ei)) * 0.5 * MFParams_.Moment_Size(x_pos, y_pos);
@@ -466,7 +466,7 @@ void Hamiltonian::InteractionsClusterCreate(int Center_site)
 
             for (int spin = 0; spin < 2; spin++)
             {
-                a = Coordinates_.Nbasis(i_posx,i_posy,orb) + ncells_cluster*n_orbs_*spin;
+                a = CoordinatesCluster_.Nbasis(i_posx,i_posy,orb) + ncells_cluster*n_orbs_*spin;
                 HamCluster_(a, a) += complex<double>(1.0, 0.0) * (
                             Parameters_.OnSiteE[orb] +
                             MFParams_.Disorder(x_pos, y_pos)

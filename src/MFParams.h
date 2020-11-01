@@ -271,13 +271,13 @@ void MFParams::Read_classical_DOFs(string filename)
     string tmp_str;
     double tmp_double;
     ifstream fl_in(filename.c_str());
-    fl_in >> tmp_str;
+    getline (fl_in,tmp_str);
 
     for (int i = 0; i < lx_; i++)
     {
         for (int j = 0; j < ly_; j++)
         {
-            fl_in >> tmp_double >> tmp_double >> etheta(i, j) >> ephi(i, j);
+            fl_in >> tmp_double >> tmp_double >> etheta(i, j) >> ephi(i, j)>> tmp_double;
         }
     }
 

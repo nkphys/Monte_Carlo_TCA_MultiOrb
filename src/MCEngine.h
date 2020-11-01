@@ -113,7 +113,7 @@ void MCEngine::RUN_MC()
         MFParams_.ephi_avg.fill(0.0);
 
         char temp_char[50];
-        sprintf(temp_char, "%.4f", temp_);
+        sprintf(temp_char, "%.10f", temp_);
 
         File_Out_progress = "output_Temp" + string(temp_char) + ".txt";
         ofstream file_out_progress(File_Out_progress.c_str());
@@ -419,7 +419,7 @@ void MCEngine::RUN_MC()
                         ofstream File_Out_Theta_Phi_MicroState(File_Out_theta_phi_microState.c_str());
 
                         File_Out_Theta_Phi_MicroState << "#x" << setw(15) << "y" << setw(15) << "Theta(x,y)" << setw(15) << "Phi(x,y)"
-                                                      << setw(15) << "Moment_Size(x,y)" << setw(15) << "Local_density(x,y)" << endl;
+                                                      << setw(15) << "Moment_Size(x,y)"<< endl;
                         for (int ix = 0; ix < lx_; ix++)
                         {
                             for (int iy = 0; iy < ly_; iy++)
