@@ -165,8 +165,8 @@ void MCEngine::RUN_MC()
         //        }
         //        assert(false);
 
-        n_states_occupied_zeroT = Coordinates_.nbasis_*2.0*(Parameters_.Fill/(n_orbs_*2.0));
-        if(!Parameters_.fixed_mu_value){
+        n_states_occupied_zeroT = Coordinates_.nbasis_*(Parameters_.Fill/(n_orbs_));
+        if(!Parameters_.fix_mu){
             initial_mu_guess = 0.5 * (Hamiltonian_.eigs_[n_states_occupied_zeroT - 1] + Hamiltonian_.eigs_[n_states_occupied_zeroT]);
         }
         else{

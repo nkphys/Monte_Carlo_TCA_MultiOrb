@@ -149,6 +149,10 @@ double MFParams::random2()
 void MFParams::initialize()
 {
 
+    bool Diagonal_ZigZag_Ising_alongZ=false;
+    bool two_by_two_Plaquettes_Ising_alongZ=false;
+    bool FM_state_Ising=false;
+    bool AFM_state_Ising=true;
     lx_ = Coordinates_.lx_;
     ly_ = Coordinates_.ly_;
 
@@ -177,12 +181,15 @@ void MFParams::initialize()
 
 
     string temp_string;
+
+    int spin_offset;
     int ix_, iy_;
     if (Parameters_.Read_Seed_from_file_ == true)
     {
+        cout<<"Configuration read from : '"<<Parameters_.Seed_file_name_<<"'"<<endl;
         ifstream Initial_Seed(Parameters_.Seed_file_name_);
         getline(Initial_Seed, temp_string);
-        // cout << temp_string << endl;
+        //cout << temp_string << endl;
         for (int ix = 0; ix < lx_; ix++)
         {
             for (int iy = 0; iy < ly_; iy++)
@@ -224,6 +231,99 @@ void MFParams::initialize()
                     else
                     {
                         etheta(i, j) = 0.0;
+                    }
+
+                    if( !Parameters_.MC_on_phi && !Parameters_.MC_on_theta){
+
+                        if(Diagonal_ZigZag_Ising_alongZ){
+
+                            if( ((i%4)==0) || ((i%4)==1)){
+                                spin_offset=1;
+                            }
+                            else{
+                                spin_offset=-1;
+                            }
+
+
+                            if(j%2==0){
+                                iy_=j/2;
+                            }
+                            else{
+                                iy_= (j -1)/2;
+                            }
+
+
+                            if( (i%4 == 0) ||  (i%4 == 2) ){
+
+
+                                if(iy_%2==0){
+                                    spin_offset = 1*spin_offset;
+                                }
+                                else{
+                                    spin_offset = -1*spin_offset;
+                                }
+
+                            }
+                            else{
+
+                                if( (iy_%2 == 0) && (j%2==0) ){
+                                    spin_offset = 1*spin_offset;
+                                }
+                                else if((iy_%2 == 1) && (j%2==0)){
+                                    spin_offset = -1*spin_offset;
+                                }
+                                else if((iy_%2 == 0) && (j%2==1)){
+                                    spin_offset = -1*spin_offset;
+                                }
+                                else{
+                                    assert ((iy_%2 == 1) && (j%2==1));
+                                    spin_offset = 1*spin_offset;
+                                }
+                            }
+
+                            etheta(i, j) = ((-1*spin_offset*1.0) + 1.0) *0.5* PI;
+                        }
+
+
+                        if(two_by_two_Plaquettes_Ising_alongZ){
+                            if( ((i%4)==0) || ((i%4)==1)){
+                                spin_offset=1;
+                            }
+                            else{
+                                spin_offset=-1;
+                            }
+
+
+                            if(j%2==0){
+                                iy_=j/2;
+                            }
+                            else{
+                                iy_= (j -1)/2;
+                            }
+
+
+                            if(iy_%2==0){
+                                spin_offset = 1*spin_offset;
+                            }
+                            else{
+                                spin_offset = -1*spin_offset;
+                            }
+
+
+
+                            etheta(i, j) = ((-1*spin_offset*1.0) + 1.0) *0.5* PI;
+                        }
+
+                        if(FM_state_Ising){
+                            etheta(i, j) = ((-1*1.0) + 1.0) *0.5* PI;
+                        }
+                        if(AFM_state_Ising){
+
+                            spin_offset = int(pow(-1.0, i+j));
+                            etheta(i, j) = ((-1*spin_offset*1.0) + 1.0) *0.5* PI;
+
+                        }
+
                     }
                 }
 
