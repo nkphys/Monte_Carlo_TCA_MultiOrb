@@ -150,9 +150,10 @@ void MFParams::initialize()
 {
 
     bool Diagonal_ZigZag_Ising_alongZ=false;
+    bool Diagonal_ZigZag_Ising_alongZ_rotatedby90deg=true;
     bool two_by_two_Plaquettes_Ising_alongZ=false;
     bool FM_state_Ising=false;
-    bool AFM_state_Ising=true;
+    bool AFM_state_Ising=false;
     lx_ = Coordinates_.lx_;
     ly_ = Coordinates_.ly_;
 
@@ -184,6 +185,18 @@ void MFParams::initialize()
 
     int spin_offset;
     int ix_, iy_;
+
+    //Initialization
+    for (int j = 0; j < ly_; j++)
+    {
+        for (int i = 0; i < lx_; i++)
+        {
+            ephi(i, j) = 0.0;
+            etheta(i, j) = 0.0;
+        }
+    }
+
+
     if (Parameters_.Read_Seed_from_file_ == true)
     {
         cout<<"Configuration read from : '"<<Parameters_.Seed_file_name_<<"'"<<endl;
@@ -219,18 +232,10 @@ void MFParams::initialize()
                     {
                         ephi(i, j) = 2.0 * random1() * PI;
                     }
-                    else
-                    {
-                        ephi(i, j) = 0.0;
-                    }
 
                     if (Parameters_.MC_on_theta == true)
                     {
                         etheta(i, j) = random1() * PI;
-                    }
-                    else
-                    {
-                        etheta(i, j) = 0.0;
                     }
 
                     if( !Parameters_.MC_on_phi && !Parameters_.MC_on_theta){
@@ -284,6 +289,62 @@ void MFParams::initialize()
                             etheta(i, j) = ((-1*spin_offset*1.0) + 1.0) *0.5* PI;
                         }
 
+                        if(Diagonal_ZigZag_Ising_alongZ_rotatedby90deg){
+                            if( ((i%4)==0) || ((i%4)==1)){
+                                spin_offset=1;
+                            }
+                            else{
+                                spin_offset=-1;
+                            }
+
+
+                            if(j%2==0){
+                                iy_=j/2;
+                            }
+                            else{
+                                iy_= (j -1)/2;
+                            }
+
+
+                            if( (i%4 == 0) ||  (i%4 == 2) ){
+
+
+                                if(iy_%2==0){
+                                    spin_offset = 1*spin_offset;
+                                }
+                                else{
+                                    spin_offset = -1*spin_offset;
+                                }
+
+                            }
+                            else{
+
+                                if( (iy_%2 == 0) && (j%2==0) ){
+                                    spin_offset = 1*spin_offset;
+                                }
+                                else if((iy_%2 == 1) && (j%2==0)){
+                                    spin_offset = -1*spin_offset;
+                                }
+                                else if((iy_%2 == 0) && (j%2==1)){
+                                    spin_offset = -1*spin_offset;
+                                }
+                                else{
+                                    assert ((iy_%2 == 1) && (j%2==1));
+                                    spin_offset = 1*spin_offset;
+                                }
+                            }
+
+                            int i_new, j_new;
+                            i_new=(i+(2*j))%lx_;
+                            j_new=j;//(ly_-j-1);
+                            assert(i_new<lx_);
+                            assert(j_new<ly_);
+
+                            //cout<<i<<"  "<<j<<"  "<<i_new<<"  "<<j_new<<endl;
+                            etheta(i_new, j_new) = (((-1*spin_offset*1.0) + 1.0) *0.5* PI);
+
+                        }
+
 
                         if(two_by_two_Plaquettes_Ising_alongZ){
                             if( ((i%4)==0) || ((i%4)==1)){
@@ -330,9 +391,17 @@ void MFParams::initialize()
 
                 Moment_Size(i, j) = 1.0;
 
+            }
+        }
+
+        for (int j = 0; j < ly_; j++)
+        {
+            for (int i = 0; i < lx_; i++)
+            {
+                etheta(i,j) += random1()*0.05;
+                ephi(i,j) += random1()*0.05;
                 Initial_MC_DOF_file << i << setw(15) << j << setw(15) << etheta(i, j) << setw(15) << ephi(i, j)
                                     << setw(15) << Moment_Size(i, j) << endl;
-
             }
         }
     }
