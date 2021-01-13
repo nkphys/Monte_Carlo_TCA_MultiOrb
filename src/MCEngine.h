@@ -152,18 +152,13 @@ void MCEngine::RUN_MC()
                           << setw(15) << "S(Pi,0)" << setw(17) << "S(0,0)" << setw(17) << "S(Pi,Pi)" << setw(17) << "S(Pi/2,Pi/2)" << setw(17) << "< N_total >"
                           << setw(15) << "E_CL" << setw(15) << "E_QM" << setw(15) << "E_Total" << setw(15) << "mu" << endl;
 
-        PrevE = Hamiltonian_.GetCLEnergy();
-        Hamiltonian_.InteractionsCreate();
-        //        Hamiltonian_.Ham_.print();
-        //cout << "Here 1"<<endl;
-        // Hamiltonian_.Check_Hermiticity();
-        //cout << "Here 2" << endl;
-        Hamiltonian_.Diagonalize(Parameters_.Dflag);
 
-        //        for(int n=0;n<2*Parameters_.ns;n++){
-        //            cout<<n<<"  "<<Hamiltonian_.eigs_[n]<<endl;
-        //        }
-        //        assert(false);
+        PrevE = Hamiltonian_.GetCLEnergy();
+
+
+        if(!Parameters_.IgnoreFermions){
+        Hamiltonian_.InteractionsCreate();
+        Hamiltonian_.Diagonalize(Parameters_.Dflag);
 
         n_states_occupied_zeroT = Coordinates_.nbasis_*(Parameters_.Fill/(n_orbs_));
         if(!Parameters_.fix_mu){
@@ -172,15 +167,18 @@ void MCEngine::RUN_MC()
         else{
             initial_mu_guess=Parameters_.fixed_mu_value;
         }
-        //initial_mu_guess=0.25;
         Parameters_.mus = Hamiltonian_.chemicalpotential(initial_mu_guess, (Parameters_.Fill/(n_orbs_*2.0)));
         Prev_QuantE = Hamiltonian_.E_QM();
         muu_prev = Parameters_.mus;
         Hamiltonian_.copy_eigs(1);
-        cout << "Initial Classical Energy[Full System] = " << PrevE << endl;
         cout << "Initial Quantum Energy[Full System] = " << Prev_QuantE << endl;
         cout << "Initial Total Energy[Full System] = " << PrevE + Prev_QuantE << endl;
         cout << "Initial mu=" << muu_prev << endl;
+         }
+
+
+        cout << "Initial Classical Energy[Full System] = " << PrevE << endl;
+
 
         int Confs_used = 0;
         int measure_start = 0;
@@ -188,8 +186,10 @@ void MCEngine::RUN_MC()
 
         if (ED_)
         {
+            if(!Parameters_.IgnoreFermions){
             Prev_QuantECluster = Prev_QuantE;
             Hamiltonian_.eigsCluster_saved_ = Hamiltonian_.eigs_saved_;
+            }
         }
 
         for (int count = 0; count < Parameters_.IterMax; count++)
@@ -209,15 +209,14 @@ void MCEngine::RUN_MC()
                         Parameters_.Dflag = 'N'; //N
                         PrevE = Hamiltonian_.GetCLEnergy();
 
+                        if(!Parameters_.IgnoreFermions){
                         Hamiltonian_.InteractionsClusterCreate(i);
                         Hamiltonian_.DiagonalizeCluster(Parameters_.Dflag);
-
-                        //n_states_occupied_zeroT=Parameters_.Fill*Hamiltonian_.eigsCluster_.size();
-                        //initial_mu_guess=0.5*(Hamiltonian_.eigsCluster_[n_states_occupied_zeroT-1] + HamiltonianCluster_.eigs_[n_states_occupied_zeroT])
                         muu_prevCluster = Hamiltonian_.chemicalpotentialCluster(muu_prevCluster, (Parameters_.Fill/(n_orbs_*2.0)));
                         Prev_QuantECluster = Hamiltonian_.E_QMCluster();
-
                         Hamiltonian_.copy_eigs_Cluster(1);
+                        }
+
                     }
                     else
                     {
@@ -253,13 +252,12 @@ void MCEngine::RUN_MC()
                         }
                     }
 
+                    if(!Parameters_.IgnoreFermions){
                     Hamiltonian_.InteractionsClusterCreate(i);
-
                     Hamiltonian_.DiagonalizeCluster(Parameters_.Dflag);
-
                     Parameters_.mus_Cluster = Hamiltonian_.chemicalpotentialCluster(muu_prevCluster, (Parameters_.Fill/(n_orbs_*2.0)));
-
                     Curr_QuantECluster = Hamiltonian_.E_QMCluster();
+                    }
 
                     //Ratio of Quantum partition functions
                     /*P = [ Tr(exp(-beta(Hquant_new)))/Tr(exp(-beta(Hquant_old)))]*
@@ -268,9 +266,15 @@ void MCEngine::RUN_MC()
                     /*exp(P12) = P
                   P12 = log (P)
                   */
-
                     //same mu-refrence is used, otherwise engine does not work properly
+                    if(!Parameters_.IgnoreFermions){
                     P_new = ProbCluster(muu_prevCluster*1.0, muu_prevCluster*1.0);
+                    }
+                    else{
+                     P_new=0.0;
+                    }
+
+
                     P12 = P_new - Parameters_.beta * ((CurrE) - (PrevE));
                     //P12 = - Parameters_.beta*((CurrE)-(PrevE));
                     //cout<<P12<<endl;
@@ -305,9 +309,12 @@ void MCEngine::RUN_MC()
                         if (ED_)
                         {
                             PrevE = CurrE;
+
+                            if(!Parameters_.IgnoreFermions){
                             Prev_QuantECluster = Curr_QuantECluster;
                             Hamiltonian_.copy_eigs_Cluster(1);
                             muu_prevCluster = Parameters_.mus_Cluster;
+                            }
                         }
                     }
 
@@ -376,9 +383,12 @@ void MCEngine::RUN_MC()
                 else
                 {
                     assert(ED_);
+
+                    if(!Parameters_.IgnoreFermions){
                     Parameters_.mus = Parameters_.mus_Cluster;
                     Hamiltonian_.eigs_ = Hamiltonian_.eigsCluster_;
                     Hamiltonian_.Ham_ = Hamiltonian_.HamCluster_;
+                    }
                 }
                 //----------------------------------//
 

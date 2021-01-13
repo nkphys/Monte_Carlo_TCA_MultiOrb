@@ -44,7 +44,7 @@ set cbr [0.6:0.8]
 set pm3d corners2color c1
 
 
-sp "ThetaPhi_Temp0.0001000000MicroState0.txt" u ($1+0.5):($2+0.5):(0):($5*cos($3)*0.50):($5*sin($3)*cos($4)*0.50):(0) w vec head size 0.2,30,60 filled lw 2 lc "black" ti ""
+sp "ThetaPhi_Temp0.0010000000MicroState0.txt" u ($1+0.5):($2+0.5):(0):($5*cos($3)*0.50):($5*sin($3)*cos($4)*0.50):(0) w vec head size 0.2,30,60 filled lw 2 lc "black" ti ""
 #sp "/home/nitin/Desktop/Telperion/data/home/n01/Spin_Fermion_Cuprates_June17_2020//PBC_Lx8_Ly8_CoolingED/Jhund2.0_fill0.312500_seed321/Local_den_Temp0.0001000000MicroState10.txt" u 1:2:($3+$4)  w pm3d ti "", "/home/nitin/Desktop/Telperion/data/home/n01/Spin_Fermion_Cuprates_June17_2020//PBC_Lx8_Ly8_CoolingED/Jhund2.0_fill0.312500_seed321/ThetaPhi_Temp0.0001000000MicroState10.txt" u ($1+0.5):($2+0.5):(0):($5*cos($3)*0.50):($5*sin($3)*sin($4)*0.50):(0) w vec head size 0.2,30,60 filled lw 2 lc "black" ti ""
 #sp "/home/nitin/Documents/Codes/Monte_Carlo_TCA_1orb/Local_den_Temp0.0100000000MicroState1.txt" u 1:2:($3+$4)  w pm3d ti "", "/home/nitin/Documents/Codes/Monte_Carlo_TCA_1orb/ThetaPhi_Temp0.0100000000MicroState1.txt" u ($1+0.5):($2+0.5):(0):($5*cos($3)*0.312500 ):($5*sin($3)*sin($4)*0.50):(0) w vec head size 0.2,30,60 filled lw 2 lc "black" ti ""
 

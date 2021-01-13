@@ -44,6 +44,7 @@ public:
     bool fix_mu;
 
     double fixed_mu_value;
+    bool IgnoreFermions;
 
     /*
 SavingMicroscopicStates=1
@@ -267,6 +268,14 @@ void Parameters::Initialize(string inputfile_)
         assert(metropolis_double == 0.0);
     }
 
+
+    double IgnoreFermions_double = int(matchstring(inputfile_, "IgnoreFermions"));
+    if(IgnoreFermions_double== 1.0){
+        IgnoreFermions = true;
+    }
+    else{
+        IgnoreFermions=false;
+    }
 
     cooling_double = double(matchstring(inputfile_, "Cooling"));
     if (cooling_double == 1.0)
