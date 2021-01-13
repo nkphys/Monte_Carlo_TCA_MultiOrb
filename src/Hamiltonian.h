@@ -381,7 +381,17 @@ double Hamiltonian::GetCLEnergy()
         EClassical += 1.0 * Parameters_.K1x * ( (sx_[i] * sx_[cell]) + (sy_[i] * sy_[cell]) + (1.0 * sz_[i] * sz_[cell]));
         cell = Coordinates_.neigh(i, 2); //+y
         EClassical += Parameters_.K1y * ((sx_[i] * sx_[cell]) + (sy_[i] * sy_[cell]) + (1.0 * sz_[i] * sz_[cell]));
+
+
+        cell = Coordinates_.neigh(i,4); //pxpy
+        EClassical += 1.0 * Parameters_.K2pxpy * ( (sx_[i] * sx_[cell]) + (sy_[i] * sy_[cell]) + (1.0 * sz_[i] * sz_[cell]));
+
+        cell = Coordinates_.neigh(i,7); //pxmy
+        EClassical += 1.0 * Parameters_.K2pxmy * ( (sx_[i] * sx_[cell]) + (sy_[i] * sy_[cell]) + (1.0 * sz_[i] * sz_[cell]));
+
     }
+
+
 
     return EClassical;
 } // ----------

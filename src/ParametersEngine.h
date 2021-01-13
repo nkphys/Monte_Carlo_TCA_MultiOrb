@@ -15,6 +15,7 @@ public:
     double mus, mus_Cluster, Fill, pi;
     double Total_Particles;
     double K1x, K1y;
+    double K2pxpy, K2pxmy;
     Mat_1_doub J_Hund, OnSiteE;
     double lambda_lattice;
     double k_const;
@@ -235,9 +236,17 @@ void Parameters::Initialize(string inputfile_)
 
 
     lambda_lattice = matchstring (inputfile_, "lambda_lattice");
+
     K1x = matchstring(inputfile_, "K");
     K1y = K1x;
     cout << "K1x= " << K1x << endl;
+
+
+    K2pxpy = matchstring(inputfile_, "K2pxpy");
+    cout << "K2pxpy= " << K2pxpy << endl;
+
+    K2pxmy = matchstring(inputfile_, "K2pxmy");
+    cout << "K2pxmy= " << K2pxmy << endl;
 
     Dflag = 'N';
 
