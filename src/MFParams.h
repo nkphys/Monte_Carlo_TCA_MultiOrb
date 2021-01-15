@@ -150,7 +150,7 @@ void MFParams::initialize()
 {
 
     bool Diagonal_ZigZag_Ising_alongZ=false;
-    bool Diagonal_ZigZag_Ising_alongZ_rotatedby90deg=true;
+    bool Diagonal_ZigZag_Ising_alongZ_rotatedby90deg=false;
     bool two_by_two_Plaquettes_Ising_alongZ=false;
     bool FM_state_Ising=false;
     bool AFM_state_Ising=false;
@@ -192,7 +192,7 @@ void MFParams::initialize()
         for (int i = 0; i < lx_; i++)
         {
             ephi(i, j) = 0.0;
-            etheta(i, j) = 0.0;
+            etheta(i, j) = PI*0.5;
         }
     }
 
@@ -398,8 +398,8 @@ void MFParams::initialize()
         {
             for (int i = 0; i < lx_; i++)
             {
-                etheta(i,j) += random1()*0.05;
-                ephi(i,j) += random1()*0.05;
+//                etheta(i,j) += random1()*0.05;
+//                ephi(i,j) += random1()*0.05;
                 Initial_MC_DOF_file << i << setw(15) << j << setw(15) << etheta(i, j) << setw(15) << ephi(i, j)
                                     << setw(15) << Moment_Size(i, j) << endl;
             }

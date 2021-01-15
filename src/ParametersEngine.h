@@ -16,6 +16,7 @@ public:
     double Total_Particles;
     double K1x, K1y;
     double K2pxpy, K2pxmy;
+    double Ax, Ay;
     Mat_1_doub J_Hund, OnSiteE;
     double lambda_lattice;
     double k_const;
@@ -248,6 +249,12 @@ void Parameters::Initialize(string inputfile_)
 
     K2pxmy = matchstring(inputfile_, "K2pxmy");
     cout << "K2pxmy= " << K2pxmy << endl;
+
+
+
+    Ax=matchstring(inputfile_, "NnBiquadratic_A");
+    Ay=Ax;
+    cout<< "Ax = Ay = "<<Ax<<endl;
 
     Dflag = 'N';
 
