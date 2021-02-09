@@ -261,14 +261,17 @@ void Parameters::Initialize(string inputfile_)
     metropolis_double = double(matchstring(inputfile_, "Metropolis_Algo"));
     if (metropolis_double == 1.0)
     {
+        cout<<"Metropolis used"<<endl;
         Metropolis_Algorithm = true;
         Heat_Bath_Algorithm = false;
     }
     else if (metropolis_double == 0.0)
     {
+        cout<<"Heat Bath used"<<endl;
         Metropolis_Algorithm = false;
         Heat_Bath_Algorithm = true;
     }
+
     else
     {
         cout << "ERROR: Metropolis_Algo can be only 1 (true) or 0 (false)" << endl;

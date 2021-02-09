@@ -73,7 +73,7 @@ double Hamiltonian::chemicalpotential(double muin, double filling)
     double n1, N;
     double dMubydN;
     double nstate = eigs_.size();
-    dMubydN = 0.05 * (eigs_[nstate - 1] - eigs_[0]) / nstate;
+    dMubydN = 0.005 * (eigs_[nstate - 1] - eigs_[0]) / nstate;
     N = filling * double(eigs_.size());
     //temp=Parameters_.temp;
     mu_out = muin;
@@ -83,7 +83,7 @@ double Hamiltonian::chemicalpotential(double muin, double filling)
     {
         assert(!Parameters_.fix_mu);
 
-        if (1 == 2)
+        if (1 == 1)
         {
             for (int i = 0; i < 100000; i++)
             {
@@ -119,7 +119,7 @@ double Hamiltonian::chemicalpotential(double muin, double filling)
         double mu1, mu2;
         double mu_temp = muin;
         //cout<<"mu_input = "<<mu_temp<<endl;
-        if (1 == 1)
+        if (1 == 2)
         {
             mu1 = eigs_[0];
             mu2 = eigs_[nstate - 1];
@@ -180,7 +180,7 @@ double Hamiltonian::chemicalpotentialCluster(double muin, double filling)
     double n1, N;
     double dMubydN;
     double nstate = eigsCluster_.size();
-    dMubydN = 0.05 * (eigsCluster_[nstate - 1] - eigsCluster_[0]) / nstate;
+    dMubydN = 0.005 * (eigsCluster_[nstate - 1] - eigsCluster_[0]) / nstate;
     N = filling * double(eigsCluster_.size());
     //temp=Parameters_.temp;
     mu_out = muin;
@@ -189,7 +189,7 @@ double Hamiltonian::chemicalpotentialCluster(double muin, double filling)
     if (!Parameters_.fix_mu)
     {
         assert(!Parameters_.fix_mu);
-        if (1 == 2)
+        if (1 == 1)
         {
             for (int i = 0; i < 100000; i++)
             {
@@ -225,7 +225,7 @@ double Hamiltonian::chemicalpotentialCluster(double muin, double filling)
         double mu1, mu2;
         double mu_temp = muin;
         //cout<<"mu_input = "<<mu_temp<<endl;
-        if (1 == 1)
+        if (1 == 2)
         {
             mu1 = eigsCluster_[0];
             mu2 = eigsCluster_[nstate - 1];

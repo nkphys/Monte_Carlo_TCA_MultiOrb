@@ -293,7 +293,13 @@ void MCEngine::RUN_MC()
                     // if (Metropolis_Algo){
                     //    P=min(1.0,P);
                     // }
-                    Prob_check = min(1.0,exp(P12));
+                    //Prob_check = min(1.0,exp(P12));
+                    if(Parameters_.Metropolis_Algorithm){
+                        Prob_check = min(1.0,exp(P12));
+                    }
+                    else{
+                        Prob_check =exp(P12)/(1.0+exp(P12));
+                    }
 
                     /*
        * VON NEUMANN's REJECTING METHOD:
