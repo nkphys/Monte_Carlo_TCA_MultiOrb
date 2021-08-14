@@ -83,7 +83,7 @@ double Hamiltonian::chemicalpotential(double muin, double filling)
     {
         assert(!Parameters_.fix_mu);
 
-        if (1 == 1)
+        if (1 == 2)
         {
             for (int i = 0; i < 100000; i++)
             {
@@ -119,10 +119,10 @@ double Hamiltonian::chemicalpotential(double muin, double filling)
         double mu1, mu2;
         double mu_temp = muin;
         //cout<<"mu_input = "<<mu_temp<<endl;
-        if (1 == 2)
+        if (1 == 1)
         {
-            mu1 = eigs_[0];
-            mu2 = eigs_[nstate - 1];
+            mu1 = eigs_[0]-20;
+            mu2 = eigs_[nstate - 1]+20;
             for (int i = 0; i < 4000000; i++)
             {
                 n1 = 0.0;
@@ -130,7 +130,7 @@ double Hamiltonian::chemicalpotential(double muin, double filling)
                 {
                     n1 += double(1.0 / (exp((eigs_[j] - mu_temp) * Parameters_.beta) + 1.0));
                 }
-                //cout <<"i  "<< i << "  n1  " << n1 << "  mu  " << mu_out<< endl;
+                //cout <<"i  "<< i << "  n1  " << n1 << "  mu  " << mu_temp<< endl;
                 if (abs(N - n1) < double(0.00001))
                 {
                     //cout<<abs(N-n1)<<endl;
@@ -189,7 +189,7 @@ double Hamiltonian::chemicalpotentialCluster(double muin, double filling)
     if (!Parameters_.fix_mu)
     {
         assert(!Parameters_.fix_mu);
-        if (1 == 1)
+        if (1 == 2)
         {
             for (int i = 0; i < 100000; i++)
             {
@@ -225,10 +225,10 @@ double Hamiltonian::chemicalpotentialCluster(double muin, double filling)
         double mu1, mu2;
         double mu_temp = muin;
         //cout<<"mu_input = "<<mu_temp<<endl;
-        if (1 == 2)
+        if (1 == 1)
         {
-            mu1 = eigsCluster_[0];
-            mu2 = eigsCluster_[nstate - 1];
+            mu1 = eigsCluster_[0]-20;
+            mu2 = eigsCluster_[nstate - 1]+20;
             for (int i = 0; i < 4000000; i++)
             {
                 n1 = 0.0;
@@ -669,36 +669,39 @@ void Hamiltonian::HTBCreate()
         }
 
         // * +y direction Neighbor
-        if (ly_pos == (Coordinates_.ly_ - 1))
-        {
-            phasex = one_complex;
-            phasey = Parameters_.BoundaryConnection*exp(iota_complex * 2.0 * (1.0 * my) * PI / (1.0 * Parameters_.TBC_cellsY));
-        }
-        else
-        {
-            phasex = one_complex;
-            phasey = one_complex;
-        }
-        m = Coordinates_.neigh(l, 2); //+y neighbour cell
-        mx_pos = Coordinates_.indx_cellwise(m);
-        my_pos = Coordinates_.indy_cellwise(m);
+        if(Coordinates_.ly_>1){
+            if (ly_pos == (Coordinates_.ly_ - 1))
+            {
+                phasex = one_complex;
+                phasey = Parameters_.BoundaryConnection*exp(iota_complex * 2.0 * (1.0 * my) * PI / (1.0 * Parameters_.TBC_cellsY));
+            }
+            else
+            {
+                phasex = one_complex;
+                phasey = one_complex;
+            }
+            m = Coordinates_.neigh(l, 2); //+y neighbour cell
+            mx_pos = Coordinates_.indx_cellwise(m);
+            my_pos = Coordinates_.indy_cellwise(m);
 
-        for (int spin = 0; spin < 2; spin++){
-            for(int orb1=0;orb1<n_orbs_;orb1++){
-                for(int orb2=0;orb2<n_orbs_;orb2++){
-                    if(Parameters_.hopping_NN_Y(orb1,orb2)!=0.0){
+            for (int spin = 0; spin < 2; spin++){
+                for(int orb1=0;orb1<n_orbs_;orb1++){
+                    for(int orb2=0;orb2<n_orbs_;orb2++){
+                        if(Parameters_.hopping_NN_Y(orb1,orb2)!=0.0){
 
-                        a = Coordinates_.Nbasis(lx_pos,ly_pos,orb1) + ncells_*n_orbs_*spin;
-                        b = Coordinates_.Nbasis(mx_pos,my_pos,orb2) + ncells_*n_orbs_*spin;
-                        assert(a != b);
-                        if (a != b)
-                        {
-                            HTB_(b, a) = complex<double>(1.0*Parameters_.hopping_NN_Y(orb1,orb2), 0.0) * phasey;
-                            HTB_(a, b) = conj(HTB_(b, a));
+                            a = Coordinates_.Nbasis(lx_pos,ly_pos,orb1) + ncells_*n_orbs_*spin;
+                            b = Coordinates_.Nbasis(mx_pos,my_pos,orb2) + ncells_*n_orbs_*spin;
+                            assert(a != b);
+                            if (a != b)
+                            {
+                                HTB_(b, a) = complex<double>(1.0*Parameters_.hopping_NN_Y(orb1,orb2), 0.0) * phasey;
+                                HTB_(a, b) = conj(HTB_(b, a));
+                            }
                         }
                     }
                 }
             }
+
         }
 
 
@@ -752,25 +755,28 @@ void Hamiltonian::HTBClusterCreate()
             }
 
             // * +y direction Neighbor
-            m = CoordinatesCluster_.neigh(l, 2);
-            mx_pos = CoordinatesCluster_.indx_cellwise(m);
-            my_pos = CoordinatesCluster_.indy_cellwise(m);
+            if(CoordinatesCluster_.ly_>1){
+                m = CoordinatesCluster_.neigh(l, 2);
+                mx_pos = CoordinatesCluster_.indx_cellwise(m);
+                my_pos = CoordinatesCluster_.indy_cellwise(m);
 
-            for (int spin = 0; spin < 2; spin++){
-                for(int orb1=0;orb1<n_orbs_;orb1++){
-                    for(int orb2=0;orb2<n_orbs_;orb2++){
-                        if(Parameters_.hopping_NN_Y(orb1,orb2)!=0.0){
-                            a = CoordinatesCluster_.Nbasis(lx_pos,ly_pos,orb1) + ncells_cluster*n_orbs_*spin;
-                            b = CoordinatesCluster_.Nbasis(mx_pos,my_pos,orb2) + ncells_cluster*n_orbs_*spin;
-                            assert(a != b);
-                            if (a != b)
-                            {
-                                HTBCluster_(b, a) = complex<double>(1.0 *Parameters_.hopping_NN_Y(orb1,orb2), 0.0);
-                                HTBCluster_(a, b) = conj(HTBCluster_(b, a));
+                for (int spin = 0; spin < 2; spin++){
+                    for(int orb1=0;orb1<n_orbs_;orb1++){
+                        for(int orb2=0;orb2<n_orbs_;orb2++){
+                            if(Parameters_.hopping_NN_Y(orb1,orb2)!=0.0){
+                                a = CoordinatesCluster_.Nbasis(lx_pos,ly_pos,orb1) + ncells_cluster*n_orbs_*spin;
+                                b = CoordinatesCluster_.Nbasis(mx_pos,my_pos,orb2) + ncells_cluster*n_orbs_*spin;
+                                assert(a != b);
+                                if (a != b)
+                                {
+                                    HTBCluster_(b, a) = complex<double>(1.0 *Parameters_.hopping_NN_Y(orb1,orb2), 0.0);
+                                    HTBCluster_(a, b) = conj(HTBCluster_(b, a));
+                                }
                             }
                         }
                     }
                 }
+
             }
 
         }

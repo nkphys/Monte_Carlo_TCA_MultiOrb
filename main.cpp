@@ -98,6 +98,7 @@ int main(int argc, char *argv[]) {
         Classical_E= Hamiltonian_.GetCLEnergy();
         cout <<"Classical_E = "<<Classical_E<<endl;
         Hamiltonian_.InteractionsCreate();
+        Parameters_.Dflag='V';
         Hamiltonian_.Diagonalize(Parameters_.Dflag);
 
 
@@ -118,6 +119,7 @@ int main(int argc, char *argv[]) {
         cout <<"Quantum_E = "<<QuantE<<endl;
 
         Observables_.Calculate_Nw();
+        Observables_.Calculate_Akw();
 
     }
 

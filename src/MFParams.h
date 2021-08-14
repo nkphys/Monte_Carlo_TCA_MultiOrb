@@ -34,6 +34,8 @@ public:
     void Adjust_MCWindow();
     void Calculate_Fields_Avg();
     void Read_classical_DOFs(string filename);
+    void Push_to_Prob_Distributions(double theta_, double phi_);
+    double Lorentzian(double x, double brd);
 
     Parameters &Parameters_;
     Coordinates &Coordinates_;
@@ -44,8 +46,38 @@ public:
     uniform_real_distribution<double> dis1_; //for random fields
     uniform_real_distribution<double> dis2_; //for random disorder
 
+    Mat_1_doub Distribution_Phi, Distribution_Theta;
+    double d_Phi, d_Theta;
+    int N_Phi, N_Theta;
+
     //mt19937_64 mt_rand(Parameters_.RandomSeed);
 };
+
+
+
+double MFParams::Lorentzian(double x, double brd)
+{
+    double temp;
+
+    temp = (1.0 / PI) * ((brd / 2.0) / ((x * x) + ((brd * brd) / 4.0)));
+
+    return temp;
+}
+
+void MFParams::Push_to_Prob_Distributions(double theta_, double phi_){
+    double eta_=0.01;
+
+    for(int theta_no=0;theta_no<Distribution_Theta.size();theta_no++){
+        Distribution_Theta[theta_no] +=Lorentzian(theta_-theta_no*d_Theta, eta_)*(1.0/(Parameters_.IterMax*Coordinates_.nbasis_));
+    }
+
+    for(int phi_no=0;phi_no<Distribution_Phi.size();phi_no++){
+        Distribution_Phi[phi_no] +=Lorentzian(phi_-phi_no*d_Phi, eta_)*(1.0/(Parameters_.IterMax*Coordinates_.nbasis_));
+    }
+
+    //cout<<"theta = "<<theta_<<", phi = "<<phi_<<endl;
+
+}
 
 void MFParams::Adjust_MCWindow()
 {
@@ -412,6 +444,15 @@ void MFParams::initialize()
         }
         Disorder_conf_file << endl;
     }
+
+    //Initializing PDF's for Phi and Theta.
+    N_Phi=2000;
+    N_Theta=1000;
+    d_Phi=(2.0*PI)/(1.0*N_Phi);
+    d_Theta=PI/(1.0*N_Theta);
+    Distribution_Phi.resize(N_Phi);
+    Distribution_Theta.resize(N_Theta);
+
 
 } // ----------
 

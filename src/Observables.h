@@ -91,237 +91,152 @@ void Observables::Calculate_Akw()
     //NEED TO CHANGE
 
     //---------Read from input file-----------------------//
-    string fileout = "Akw.txt";
+    string fileout_temp = "Akw";
     double omega_min, omega_max, d_omega;
     double eta = 0.001;
-    omega_min = -8.0;
-    omega_max = 4.0;
+    omega_min = Hamiltonian_.eigs_[0] -1.0;
+    omega_max = Hamiltonian_.eigs_[Hamiltonian_.Ham_.n_row()-1] +1.0;
     d_omega = 0.03;
     //---------------------------------------------------//
 
     int omega_index_max = int((omega_max - omega_min) / (d_omega));
 
-    ofstream file_Akw_out(fileout.c_str());
+
 
     int c1, c2;
     int j_posx, j_posy;
     int l_posx, l_posy;
 
-    Mat_3_Complex_doub A_up_00, A_up_11, A_up_22;
-    Mat_3_Complex_doub A_dn_00, A_dn_11, A_dn_22 ;
-    A_up_00.resize(Coordinates_.ncells_);
-    A_dn_00.resize(Coordinates_.ncells_);
-    A_up_11.resize(Coordinates_.ncells_);
-    A_dn_11.resize(Coordinates_.ncells_);
-    A_up_22.resize(Coordinates_.ncells_);
-    A_dn_22.resize(Coordinates_.ncells_);
 
-    for (int i = 0; i < Coordinates_.ncells_; i++)
-    {
-        A_up_00[i].resize(Coordinates_.ncells_);
-        A_dn_00[i].resize(Coordinates_.ncells_);
-        A_up_11[i].resize(Coordinates_.ncells_);
-        A_dn_11[i].resize(Coordinates_.ncells_);
-        A_up_22[i].resize(Coordinates_.ncells_);
-        A_dn_22[i].resize(Coordinates_.ncells_);
+    for(int orb=0;orb<Parameters_.n_orbs;orb++){
 
-        for (int j = 0; j < Coordinates_.ncells_; j++)
+        //cout<<"here "<<orb<<endl;
+        string fileout = fileout_temp + "_orb" + to_string(orb) + ".txt";
+        ofstream file_Akw_out(fileout.c_str());
+        Mat_3_Complex_doub A_up, A_dn;
+        A_up.resize(Coordinates_.ncells_);
+        A_dn.resize(Coordinates_.ncells_);
+        for (int i = 0; i < Coordinates_.ncells_; i++)
         {
-            A_up_00[i][j].resize(omega_index_max);
-            A_dn_00[i][j].resize(omega_index_max);
-            A_up_11[i][j].resize(omega_index_max);
-            A_dn_11[i][j].resize(omega_index_max);
-            A_up_22[i][j].resize(omega_index_max);
-            A_dn_22[i][j].resize(omega_index_max);
-        }
-    }
-
-    complex<double> Nup_check(0, 0);
-    complex<double> Ndn_check(0, 0);
-
-    for (int j = 0; j < Coordinates_.ncells_; j++)
-    {
-        j_posx = Coordinates_.indx_cellwise(j);
-        j_posy = Coordinates_.indy_cellwise(j);
-
-        for (int l = 0; l < Coordinates_.ncells_; l++)
-        {
-            l_posx = Coordinates_.indx_cellwise(l);
-            l_posy = Coordinates_.indy_cellwise(l);
-
-            for (int omega_ind = 0; omega_ind < omega_index_max; omega_ind++)
-            {
-                A_up_00[j][l][omega_ind] = zero_complex;
-                A_dn_00[j][l][omega_ind] = zero_complex;
-                A_up_11[j][l][omega_ind] = zero_complex;
-                A_dn_11[j][l][omega_ind] = zero_complex;
-                A_up_22[j][l][omega_ind] = zero_complex;
-                A_dn_22[j][l][omega_ind] = zero_complex;
-
-                for (int n = 0; n < Hamiltonian_.Ham_.n_row(); n++)
-                {
-
-                    //c= l + or1*ns_ + ns_*orbs_*spin;
-
-                    //Hamiltonian_.Ham_(c2,n) is nth eigenvector and c2th component [checked];
-                    c1 = Coordinates_.Nbasis(l_posx, l_posy, 0) + Coordinates_.nbasis_;
-                    c2 = Coordinates_.Nbasis(j_posx, j_posy, 0) + Coordinates_.nbasis_;
-                    A_dn_00[j][l][omega_ind] += conj(Hamiltonian_.Ham_(c1, n)) * Hamiltonian_.Ham_(c2, n) *
-                                                Lorentzian(omega_min + (omega_ind * d_omega) - Hamiltonian_.eigs_[n], eta);
-
-                    c1 = Coordinates_.Nbasis(l_posx, l_posy, 0);
-                    c2 = Coordinates_.Nbasis(j_posx, j_posy, 0);
-                    A_up_00[j][l][omega_ind] += conj(Hamiltonian_.Ham_(c1, n)) * Hamiltonian_.Ham_(c2, n) *
-                                                Lorentzian(omega_min + (omega_ind * d_omega) - Hamiltonian_.eigs_[n], eta);
-
-                    c1 = Coordinates_.Nbasis(l_posx, l_posy, 1) + Coordinates_.nbasis_;
-                    c2 = Coordinates_.Nbasis(j_posx, j_posy, 1) + Coordinates_.nbasis_;
-                    A_dn_11[j][l][omega_ind] += conj(Hamiltonian_.Ham_(c1, n)) * Hamiltonian_.Ham_(c2, n) *
-                                                Lorentzian(omega_min + (omega_ind * d_omega) - Hamiltonian_.eigs_[n], eta);
-
-                    c1 = Coordinates_.Nbasis(l_posx, l_posy, 1);
-                    c2 = Coordinates_.Nbasis(j_posx, j_posy, 1);
-                    A_up_11[j][l][omega_ind] += conj(Hamiltonian_.Ham_(c1, n)) * Hamiltonian_.Ham_(c2, n) *
-                                                Lorentzian(omega_min + (omega_ind * d_omega) - Hamiltonian_.eigs_[n], eta);
-
-                    c1 = Coordinates_.Nbasis(l_posx, l_posy, 2) + Coordinates_.nbasis_;
-                    c2 = Coordinates_.Nbasis(j_posx, j_posy, 2) + Coordinates_.nbasis_;
-                    A_dn_22[j][l][omega_ind] += conj(Hamiltonian_.Ham_(c1, n)) * Hamiltonian_.Ham_(c2, n) *
-                                                Lorentzian(omega_min + (omega_ind * d_omega) - Hamiltonian_.eigs_[n], eta);
-
-                    c1 = Coordinates_.Nbasis(l_posx, l_posy, 2);
-                    c2 = Coordinates_.Nbasis(j_posx, j_posy, 2);
-                    A_up_22[j][l][omega_ind] += conj(Hamiltonian_.Ham_(c1, n)) * Hamiltonian_.Ham_(c2, n) *
-                                                Lorentzian(omega_min + (omega_ind * d_omega) - Hamiltonian_.eigs_[n], eta);
-
-                }
-
-                if (j == l)
-                {
-                    Nup_check += (A_up_00[j][l][omega_ind]+A_up_11[j][l][omega_ind]+A_up_22[j][l][omega_ind]) * d_omega;
-                    Ndn_check += (A_dn_00[j][l][omega_ind]+A_dn_11[j][l][omega_ind]+A_dn_22[j][l][omega_ind]) * d_omega;
-                }
-            }
-        }
-    }
-
-    cout << "Nup_check = " << Nup_check << endl;
-    cout << "Ndn_check = " << Ndn_check << endl;
-
-    complex<double> temp_up_00, temp_up_11, temp_up_22;
-    complex<double> temp_dn_00, temp_dn_11, temp_dn_22;
-    double kx, ky;
-    int kx_i, ky_i;
-
-    Mat_1_intpair k_path;
-    k_path.clear();
-    pair_int temp_pair;
-
-    //--------\Gamma to X-----------------
-    ky_i = 0;
-    for (kx_i = 0; kx_i <= (Parameters_.lx / 2); kx_i++)
-    {
-        temp_pair.first = kx_i;
-        temp_pair.second = ky_i;
-        k_path.push_back(temp_pair);
-    }
-    //----------------------------------
-
-    //--------X to M-----------------
-    kx_i = (Parameters_.lx / 2);
-    for (ky_i = 1; ky_i <= (Parameters_.lx / 2); ky_i++)
-    {
-        temp_pair.first = kx_i;
-        temp_pair.second = ky_i;
-        k_path.push_back(temp_pair);
-    }
-    //----------------------------------
-
-    //--------M to \Gamma[with one extra point,
-    //                  because in gnuplor use "set pm3d corners2color c1"
-    //                  ]-----------------
-    kx_i = (Parameters_.lx / 2) - 1;
-    ky_i = (Parameters_.lx / 2) - 1;
-    for (kx_i = (Parameters_.lx / 2) - 1; kx_i >= -1; kx_i--)
-    {
-        temp_pair.first = kx_i;
-        temp_pair.second = kx_i;
-        k_path.push_back(temp_pair);
-    }
-    //----------------------------------
-
-    double k22_offset = 0;
-    for (int k_point = 0; k_point < k_path.size(); k_point++)
-    {
-
-        kx_i = k_path[k_point].first;
-        ky_i = k_path[k_point].second;
-        kx = (2.0 * PI * kx_i) / (1.0 * Parameters_.lx);
-        ky = (2.0 * PI * ky_i) / (1.0 * Parameters_.ly);
-
-        for (int omega_ind = 0; omega_ind < omega_index_max; omega_ind++)
-        {
-            temp_up_00 = zero_complex;
-            temp_dn_00 = zero_complex;
-            temp_up_11 = zero_complex;
-            temp_dn_11 = zero_complex;
-            temp_up_22 = zero_complex;
-            temp_dn_22 = zero_complex;
+            A_up[i].resize(Coordinates_.ncells_);
+            A_dn[i].resize(Coordinates_.ncells_);
 
             for (int j = 0; j < Coordinates_.ncells_; j++)
             {
-                j_posx = Coordinates_.indx_cellwise(j);
-                j_posy = Coordinates_.indy_cellwise(j);
+                A_up[i][j].resize(omega_index_max);
+                A_dn[i][j].resize(omega_index_max);
+            }
+        }
 
-                for (int l = 0; l < Coordinates_.ncells_; l++)
+
+        complex<double> Nup_check(0, 0);
+        complex<double> Ndn_check(0, 0);
+
+        for (int j = 0; j < Coordinates_.ncells_; j++)
+        {
+            j_posx = Coordinates_.indx_cellwise(j);
+            j_posy = Coordinates_.indy_cellwise(j);
+
+            for (int l = 0; l < Coordinates_.ncells_; l++)
+            {
+                l_posx = Coordinates_.indx_cellwise(l);
+                l_posy = Coordinates_.indy_cellwise(l);
+
+                for (int omega_ind = 0; omega_ind < omega_index_max; omega_ind++)
                 {
-                    l_posx = Coordinates_.indx_cellwise(l);
-                    l_posy = Coordinates_.indy_cellwise(l);
+                    A_up[j][l][omega_ind] = zero_complex;
+                    A_dn[j][l][omega_ind] = zero_complex;
 
-                    temp_up_00 += one_complex *
-                                  exp(iota_complex * (kx * (j_posx - l_posx) +
-                                                      ky * (j_posy - l_posy) )) *
-                                  A_up_00[j][l][omega_ind];
 
-                    temp_dn_00 += one_complex *
-                                  exp(iota_complex * (kx * (j_posx - l_posx) +
-                                                      ky * (j_posy - l_posy))) *
-                                  A_dn_00[j][l][omega_ind];
+                    for (int n = 0; n < Hamiltonian_.Ham_.n_row(); n++)
+                    {
 
-                    temp_up_11 += one_complex *
-                                  exp(iota_complex * (kx * (j_posx - l_posx) +
-                                                      ky * (j_posy - l_posy) )) *
-                                  A_up_11[j][l][omega_ind];
+                        //c= l + or1*ns_ + ns_*orbs_*spin;
+                        //Hamiltonian_.Ham_(c2,n) is nth eigenvector and c2th component [checked];
+                        c1 = Coordinates_.Nbasis(l_posx, l_posy, orb) + Coordinates_.nbasis_;
+                        c2 = Coordinates_.Nbasis(j_posx, j_posy, orb) + Coordinates_.nbasis_;
+                        A_dn[j][l][omega_ind] += conj(Hamiltonian_.Ham_(c1, n)) * Hamiltonian_.Ham_(c2, n) *
+                                Lorentzian(omega_min + (omega_ind * d_omega) - Hamiltonian_.eigs_[n], eta);
 
-                    temp_dn_11 += one_complex *
-                                  exp(iota_complex * (kx * (j_posx - l_posx) +
-                                                      ky * (j_posy - l_posy))) *
-                                  A_dn_11[j][l][omega_ind];
+                        c1 = Coordinates_.Nbasis(l_posx, l_posy, orb);
+                        c2 = Coordinates_.Nbasis(j_posx, j_posy, orb);
+                        A_up[j][l][omega_ind] += conj(Hamiltonian_.Ham_(c1, n)) * Hamiltonian_.Ham_(c2, n) *
+                                Lorentzian(omega_min + (omega_ind * d_omega) - Hamiltonian_.eigs_[n], eta);
 
-                    temp_up_22 += one_complex *
-                                  exp(iota_complex * (kx * (j_posx - l_posx) +
-                                                      ky * (j_posy - l_posy) )) *
-                                  A_up_22[j][l][omega_ind];
+                    }
 
-                    temp_dn_22 += one_complex *
-                                  exp(iota_complex * (kx * (j_posx - l_posx) +
-                                                      ky * (j_posy - l_posy))) *
-                                  A_dn_22[j][l][omega_ind];
-
+                    if (j == l)
+                    {
+                        Nup_check += (A_up[j][l][omega_ind]) * d_omega;
+                        Ndn_check += (A_dn[j][l][omega_ind]) * d_omega;
+                    }
                 }
             }
-            //Use 1:6:7----for gnuplot
-            file_Akw_out << k_point << "   " << kx_i << "   " << ky_i << "   " << (ky_i * Parameters_.lx) + kx_i << "    " << omega_min + (d_omega * omega_ind) << "   " << omega_ind << "    "
-                         << temp_up_00.real() << "    " << temp_dn_00.real() << "    "
-                         << temp_up_11.real() << "    " << temp_dn_11.real() << "    "
-                         << temp_up_22.real() << "    " << temp_dn_22.real() << "    "
-                         << temp_up_00.imag() << "     " << temp_dn_00.imag() << "    "
-                         << temp_up_11.imag() << "     " << temp_dn_11.imag() << "    "
-                         << temp_up_22.imag() << "     " << temp_dn_22.imag() << "    "
-                         << endl;
         }
-        file_Akw_out << endl;
+
+
+        cout << "Nup_check = " << Nup_check << endl;
+        cout << "Ndn_check = " << Ndn_check << endl;
+
+
+
+        complex<double> temp_up;
+        complex<double> temp_dn;
+        double kx, ky;
+        int kx_i, ky_i;
+
+
+        for (int kx_i_ = 0; kx_i_ < Parameters_.lx; kx_i_++)
+        {
+            for (int ky_i_ = 0; ky_i_ < Parameters_.ly; ky_i_++)
+            {
+
+                kx_i = kx_i_;
+                ky_i = ky_i_;
+                kx = (2.0 * PI * kx_i) / (1.0 * Parameters_.lx);
+                ky = (2.0 * PI * ky_i) / (1.0 * Parameters_.ly);
+
+                for (int omega_ind = 0; omega_ind < omega_index_max; omega_ind++)
+                {
+                    temp_up = zero_complex;
+                    temp_dn = zero_complex;
+
+                    for (int j = 0; j < Coordinates_.ncells_; j++)
+                    {
+                        j_posx = Coordinates_.indx_cellwise(j);
+                        j_posy = Coordinates_.indy_cellwise(j);
+
+                        for (int l = 0; l < Coordinates_.ncells_; l++)
+                        {
+                            l_posx = Coordinates_.indx_cellwise(l);
+                            l_posy = Coordinates_.indy_cellwise(l);
+
+                            temp_up += one_complex *
+                                    exp(iota_complex * (kx * (j_posx - l_posx) +
+                                                        ky * (j_posy - l_posy) )) *
+                                    A_up[j][l][omega_ind];
+
+                            temp_dn += one_complex *
+                                    exp(iota_complex * (kx * (j_posx - l_posx) +
+                                                        ky * (j_posy - l_posy))) *
+                                    A_dn[j][l][omega_ind];
+
+                        }
+                    }
+                    //Use 3:4:6(7)----for gnuplot
+                    file_Akw_out <<kx_i << "   " << ky_i << "   " << (ky_i * Parameters_.lx) + kx_i << "    " << omega_min + (d_omega * omega_ind) << "   " << omega_ind << "    "
+                                 << temp_up.real() << "    " << temp_dn.real() << "    "
+                                 << endl;
+                }
+                file_Akw_out << endl;
+            }
+        }
+
+
+
     }
+
+
 
 
 }
@@ -334,8 +249,8 @@ void Observables::Calculate_Nw()
     string fileout = "Nw_total.txt";
     double omega_min, omega_max, d_omega;
     double eta = 0.1;
-    omega_min = -100;
-    omega_max = 100.0;
+    omega_min = Hamiltonian_.eigs_[0] -1.0;
+    omega_max = Hamiltonian_.eigs_[Hamiltonian_.Ham_.n_row()-1] +1.0;
     d_omega = 0.001;
     //---------------------------------------------------//
 

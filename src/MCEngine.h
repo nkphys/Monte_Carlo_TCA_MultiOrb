@@ -538,6 +538,23 @@ void MCEngine::RUN_MC()
         string File_Out_theta_phi_microState0_toread = "ThetaPhi_Temp" + string(temp_char) +
                 "MicroState0.txt";
         MFParams_.Read_classical_DOFs(File_Out_theta_phi_microState0_toread);
+
+
+        string File_Out_PDF_theta = "PDF_Theta" + string(temp_char) +".txt";
+        ofstream File_Out_PDF_Theta(File_Out_PDF_theta.c_str());
+        File_Out_PDF_Theta<<"# theta_no Theta_val PDF  for dTheta="<<MFParams_.d_Theta<<endl;
+        string File_Out_PDF_phi = "PDF_Phi" + string(temp_char) +".txt";
+        ofstream File_Out_PDF_Phi(File_Out_PDF_phi.c_str());
+        File_Out_PDF_Theta<<"# phi_no Phi_val PDF  for dPhi="<<MFParams_.d_Phi<<endl;
+        for(int theta_no=0;theta_no<MFParams_.Distribution_Theta.size();theta_no++){
+            File_Out_PDF_Theta<<theta_no<<"  "<<theta_no*MFParams_.d_Theta<<"   "<<MFParams_.Distribution_Theta[theta_no]<<endl;
+        }
+
+        for(int phi_no=0;phi_no<MFParams_.Distribution_Phi.size();phi_no++){
+            File_Out_PDF_Phi<<phi_no<<"  "<<phi_no*MFParams_.d_Phi<<"   "<<MFParams_.Distribution_Phi[phi_no]<<endl;
+        }
+
+
     } //Temperature loop
 
 } // ---------
