@@ -7,15 +7,13 @@ class Parameters
 
 public:
     int lx, ly, ns, IterMax, MCNorm, RandomSeed;
-    int n_orbs;
+    int n_orbs, n_Spins;
     string ModelType;
     int TBC_mx, TBC_my;
     int TBC_cellsX, TBC_cellsY;
     int lx_cluster, ly_cluster;
     double mus, mus_Cluster, Fill, pi;
     double Total_Particles;
-    double K1x, K1y;
-    double K2pxpy, K2pxmy;
     double Ax, Ay;
     Mat_1_doub J_Hund, OnSiteE;
     double lambda_lattice;
@@ -27,10 +25,8 @@ public:
     bool Read_Seed_from_file_;
     string Seed_file_name_;
 
-    Matrix<double> hopping_NN_X;
-    Matrix<double> hopping_NN_Y;
-    Matrix<double> hopping_NNN_PXPY;
-    Matrix<double> hopping_NNN_PXMY;
+    Matrix<double> hopping_0X_0Y, hopping_1X_0Y, hopping_0X_1Y, hopping_m1X_1Y;
+    Matrix<double> K_0X_0Y, K_1X_0Y, K_0X_1Y, K_m1X_1Y;
 
     Mat_1_string MC_DOF;
 
@@ -145,6 +141,7 @@ void Parameters::Initialize(string inputfile_)
 
     TBC_mx = int(matchstring(inputfile_, "TwistedBoundaryCond_mx"));
     n_orbs = int(matchstring(inputfile_, "N_Orbs"));
+    n_Spins = int(matchstring(inputfile_, "No_of_classical_spins_per_site"));
     J_Hund.resize(n_orbs);
     OnSiteE.resize(n_orbs);
 
@@ -199,57 +196,88 @@ void Parameters::Initialize(string inputfile_)
         OnSiteE[n] = matchstring(inputfile_, OnSiteE_str_temp);
     }
 
+
+
+
+    //    Matrix<double> hopping_0X_0Y, hopping_1X_0Y, hopping_0X_1Y, hopping_m1X_1Y;
+   //  Matrix<double> K_0X_0Y, K_1X_0Y, K_0X_1Y, K_m1X_1Y;
+
+
     //Hopping matrices -------------------
+    hopping_0X_0Y.resize(n_orbs,n_orbs);
+    hopping_1X_0Y.resize(n_orbs,n_orbs);
+    hopping_0X_1Y.resize(n_orbs,n_orbs);
+    hopping_m1X_1Y.resize(n_orbs,n_orbs);
 
-
-    hopping_NN_X.resize(n_orbs,n_orbs);
-    hopping_NN_Y.resize(n_orbs,n_orbs);
-    string Nearest_Neigh_Hopping_basis_X;
-    string Nearest_Neigh_Hopping_basis_Y;
-
-    string NN_X_str, NN_Y_str;
+    string Hopping_0X_0Y, Hopping_1X_0Y, Hopping_0X_1Y, Hopping_m1X_1Y;
+    string Hop_0X_0Y_str, Hop_1X_0Y_str, Hop_0X_1Y_str, Hop_m1X_1Y_str;
     for (int m=0;m<n_orbs;m++){
 
-        NN_X_str = "Nearest_Neigh_Hopping_X_basis_row" + to_string(m);
-        NN_Y_str = "Nearest_Neigh_Hopping_Y_basis_row" + to_string(m);
-        Nearest_Neigh_Hopping_basis_X=matchstring2(inputfile_, NN_X_str);
-        Nearest_Neigh_Hopping_basis_Y=matchstring2(inputfile_, NN_Y_str);
+        Hop_0X_0Y_str = "Hopping_0X_0Y_row" + to_string(m);
+        Hop_1X_0Y_str = "Hopping_1X_0Y_row" + to_string(m);
+        Hop_0X_1Y_str = "Hopping_0X_1Y_row" + to_string(m);
+        Hop_m1X_1Y_str = "Hopping_m1X_1Y_row" + to_string(m);
 
-        stringstream stream_X(Nearest_Neigh_Hopping_basis_X);
-        stringstream stream_Y(Nearest_Neigh_Hopping_basis_Y);
+        Hopping_0X_0Y=matchstring2(inputfile_, Hop_0X_0Y_str);
+        Hopping_1X_0Y=matchstring2(inputfile_, Hop_1X_0Y_str);
+        Hopping_0X_1Y=matchstring2(inputfile_, Hop_0X_1Y_str);
+        Hopping_m1X_1Y=matchstring2(inputfile_, Hop_m1X_1Y_str);
+
+        stringstream stream_Hopping_0X_0Y(Hopping_0X_0Y);
+        stringstream stream_Hopping_1X_0Y(Hopping_1X_0Y);
+        stringstream stream_Hopping_0X_1Y(Hopping_0X_1Y);
+        stringstream stream_Hopping_m1X_1Y(Hopping_m1X_1Y);
 
         for(int n=0;n<n_orbs;n++){
-            stream_X >> hopping_NN_X(m,n);
-            stream_Y >> hopping_NN_Y(m,n);
-
+            stream_Hopping_0X_0Y >> hopping_0X_0Y(m,n);
+            stream_Hopping_1X_0Y >> hopping_1X_0Y(m,n);
+            stream_Hopping_0X_1Y >> hopping_0X_1Y(m,n);
+            stream_Hopping_m1X_1Y >> hopping_m1X_1Y(m,n);
         }
     }
-
-
-
-    //Next Nearest hopping------------
-    hopping_NNN_PXPY.resize(n_orbs,n_orbs);
-    hopping_NNN_PXMY.resize(n_orbs,n_orbs);
-    //If needed read from input file
 
     //Hopping matrices done---------------
 
 
 
+    //Superexchange matrices -------------------
+    K_0X_0Y.resize(n_Spins,n_Spins);
+    K_1X_0Y.resize(n_Spins,n_Spins);
+    K_0X_1Y.resize(n_Spins,n_Spins);
+    K_m1X_1Y.resize(n_Spins,n_Spins);
+
+    string K_0X_0Y_str, K_1X_0Y_str, K_0X_1Y_str, K_m1X_1Y_str;
+
+    string KExc_0X_0Y_str, KExc_1X_0Y_str, KExc_0X_1Y_str, KExc_m1X_1Y_str ;
+    for (int m=0;m<n_Spins;m++){
+
+        KExc_0X_0Y_str = "K_0X_0Y_row" + to_string(m);
+        KExc_1X_0Y_str = "K_1X_0Y_row" + to_string(m);
+        KExc_0X_1Y_str = "K_0X_1Y_row" + to_string(m);
+        KExc_m1X_1Y_str = "K_m1X_1Y_row" + to_string(m);
+
+        K_0X_0Y_str=matchstring2(inputfile_, KExc_0X_0Y_str);
+        K_1X_0Y_str=matchstring2(inputfile_, KExc_1X_0Y_str);
+        K_0X_1Y_str=matchstring2(inputfile_, KExc_0X_1Y_str);
+        K_m1X_1Y_str=matchstring2(inputfile_, KExc_m1X_1Y_str);
+
+        stringstream stream_K_0X_0Y(K_0X_0Y_str);
+        stringstream stream_K_1X_0Y(K_1X_0Y_str);
+        stringstream stream_K_0X_1Y(K_0X_1Y_str);
+        stringstream stream_K_m1X_1Y(K_m1X_1Y_str);
+
+        for(int n=0;n<n_Spins;n++){
+            stream_K_0X_0Y >> K_0X_0Y(m,n);
+            stream_K_1X_0Y >> K_1X_0Y(m,n);
+            stream_K_0X_1Y >> K_0X_1Y(m,n);
+            stream_K_m1X_1Y >> K_m1X_1Y(m,n);
+        }
+    }
+
+    //Superexchange matrices done---------------
+
 
     lambda_lattice = matchstring (inputfile_, "lambda_lattice");
-
-    K1x = matchstring(inputfile_, "K");
-    K1y = K1x;
-    cout << "K1x= " << K1x << endl;
-
-
-    K2pxpy = matchstring(inputfile_, "K2pxpy");
-    cout << "K2pxpy= " << K2pxpy << endl;
-
-    K2pxmy = matchstring(inputfile_, "K2pxmy");
-    cout << "K2pxmy= " << K2pxmy << endl;
-
 
 
     Ax=matchstring(inputfile_, "NnBiquadratic_A");
@@ -371,6 +399,10 @@ void Parameters::Initialize(string inputfile_)
         cout << "ERROR:Read_Seed_from_file can be only 1 (true) or 0 (false)" << endl;
         assert(Read_Seed_from_file_double == 0.0);
     }
+
+
+
+    assert((n_Spins==n_orbs) || (n_Spins==1));
 
     Seed_file_name_ = matchstring2(inputfile_, "Seed_file_name");
 

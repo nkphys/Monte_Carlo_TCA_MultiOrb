@@ -109,8 +109,10 @@ void MCEngine::RUN_MC()
         Observables_.Nematic_order_square_mean_ = 0.0;
         Observables_.Nematic_order_mean_ = 0.0;
 
-        MFParams_.etheta_avg.fill(0.0);
-        MFParams_.ephi_avg.fill(0.0);
+        for(int spin_no=0;spin_no<Parameters_.n_Spins;spin_no++){
+        MFParams_.etheta_avg[spin_no].fill(0.0);
+        MFParams_.ephi_avg[spin_no].fill(0.0);
+        }
 
         char temp_char[50];
         sprintf(temp_char, "%.10f", temp_);
@@ -157,24 +159,24 @@ void MCEngine::RUN_MC()
 
 
         if(!Parameters_.IgnoreFermions){
-        Hamiltonian_.InteractionsCreate();
-        Hamiltonian_.Diagonalize(Parameters_.Dflag);
+            Hamiltonian_.InteractionsCreate();
+            Hamiltonian_.Diagonalize(Parameters_.Dflag);
 
-        n_states_occupied_zeroT = Coordinates_.nbasis_*(Parameters_.Fill/(n_orbs_));
-        if(!Parameters_.fix_mu){
-            initial_mu_guess = 0.5 * (Hamiltonian_.eigs_[n_states_occupied_zeroT - 1] + Hamiltonian_.eigs_[n_states_occupied_zeroT]);
+            n_states_occupied_zeroT = Coordinates_.nbasis_*(Parameters_.Fill/(n_orbs_));
+            if(!Parameters_.fix_mu){
+                initial_mu_guess = 0.5 * (Hamiltonian_.eigs_[n_states_occupied_zeroT - 1] + Hamiltonian_.eigs_[n_states_occupied_zeroT]);
+            }
+            else{
+                initial_mu_guess=Parameters_.fixed_mu_value;
+            }
+            Parameters_.mus = Hamiltonian_.chemicalpotential(initial_mu_guess, (Parameters_.Fill/(n_orbs_*2.0)));
+            Prev_QuantE = Hamiltonian_.E_QM();
+            muu_prev = Parameters_.mus;
+            Hamiltonian_.copy_eigs(1);
+            cout << "Initial Quantum Energy[Full System] = " << Prev_QuantE << endl;
+            cout << "Initial Total Energy[Full System] = " << PrevE + Prev_QuantE << endl;
+            cout << "Initial mu=" << muu_prev << endl;
         }
-        else{
-            initial_mu_guess=Parameters_.fixed_mu_value;
-        }
-        Parameters_.mus = Hamiltonian_.chemicalpotential(initial_mu_guess, (Parameters_.Fill/(n_orbs_*2.0)));
-        Prev_QuantE = Hamiltonian_.E_QM();
-        muu_prev = Parameters_.mus;
-        Hamiltonian_.copy_eigs(1);
-        cout << "Initial Quantum Energy[Full System] = " << Prev_QuantE << endl;
-        cout << "Initial Total Energy[Full System] = " << PrevE + Prev_QuantE << endl;
-        cout << "Initial mu=" << muu_prev << endl;
-         }
 
 
         cout << "Initial Classical Energy[Full System] = " << PrevE << endl;
@@ -187,8 +189,8 @@ void MCEngine::RUN_MC()
         if (ED_)
         {
             if(!Parameters_.IgnoreFermions){
-            Prev_QuantECluster = Prev_QuantE;
-            Hamiltonian_.eigsCluster_saved_ = Hamiltonian_.eigs_saved_;
+                Prev_QuantECluster = Prev_QuantE;
+                Hamiltonian_.eigsCluster_saved_ = Hamiltonian_.eigs_saved_;
             }
         }
 
@@ -198,151 +200,154 @@ void MCEngine::RUN_MC()
             for (int i = 0; i < ncells_; i++)
             { // For each site
 
-                for (int mc_dof = 0; mc_dof < Parameters_.MC_DOF.size(); mc_dof++)
+                for(int spin_no=0;spin_no<Parameters_.n_Spins;spin_no++)
                 {
-
-                    //***Before change*************//
-
-                    if (ED_ == false)
+                    for (int mc_dof = 0; mc_dof < Parameters_.MC_DOF.size(); mc_dof++)
                     {
-                        //TCA is used
-                        Parameters_.Dflag = 'N'; //N
-                        PrevE = Hamiltonian_.GetCLEnergy();
 
-                        if(!Parameters_.IgnoreFermions){
-                        Hamiltonian_.InteractionsClusterCreate(i);
-                        Hamiltonian_.DiagonalizeCluster(Parameters_.Dflag);
-                        muu_prevCluster = Hamiltonian_.chemicalpotentialCluster(muu_prevCluster, (Parameters_.Fill/(n_orbs_*2.0)));
-                        Prev_QuantECluster = Hamiltonian_.E_QMCluster();
-                        Hamiltonian_.copy_eigs_Cluster(1);
-                        }
+                        //***Before change*************//
 
-                    }
-                    else
-                    {
-                        assert(ED_);
-                    }
-
-                    //*******************************//
-
-                    x = Coordinates_.indx_cellwise(i);
-                    y = Coordinates_.indy_cellwise(i);
-
-                    saved_Params[0] = MFParams_.etheta(x, y);
-                    saved_Params[1] = MFParams_.ephi(x, y);
-                    saved_Params[2] = MFParams_.Moment_Size(x, y);
-
-
-                    MFParams_.FieldThrow(i, Parameters_.MC_DOF[mc_dof]);
-                    CurrE = Hamiltonian_.GetCLEnergy();
-
-                    if (count < (Parameters_.IterMax - (Gap_bw_sweeps * (MC_sweeps_used_for_Avg - 1) + MC_sweeps_used_for_Avg)))
-                    {
-                        Parameters_.Dflag = 'N'; //N
-                    }
-                    else
-                    {
-                        if (ED_)
+                        if (ED_ == false)
                         {
-                            Parameters_.Dflag = 'N'; //quantum observables are calculated separately.
+                            //TCA is used
+                            Parameters_.Dflag = 'N'; //N
+                            PrevE = Hamiltonian_.GetCLEnergy();
+
+                            if(!Parameters_.IgnoreFermions){
+                                Hamiltonian_.InteractionsClusterCreate(i);
+                                Hamiltonian_.DiagonalizeCluster(Parameters_.Dflag);
+                                muu_prevCluster = Hamiltonian_.chemicalpotentialCluster(muu_prevCluster, (Parameters_.Fill/(n_orbs_*2.0)));
+                                Prev_QuantECluster = Hamiltonian_.E_QMCluster();
+                                Hamiltonian_.copy_eigs_Cluster(1);
+                            }
+
                         }
                         else
                         {
+                            assert(ED_);
+                        }
+
+                        //*******************************//
+
+                        x = Coordinates_.indx_cellwise(i);
+                        y = Coordinates_.indy_cellwise(i);
+
+                        saved_Params[0] = MFParams_.etheta[spin_no](x, y);
+                        saved_Params[1] = MFParams_.ephi[spin_no](x, y);
+                        saved_Params[2] = MFParams_.Moment_Size[spin_no](x, y);
+
+
+                        MFParams_.FieldThrow(i, spin_no, Parameters_.MC_DOF[mc_dof]);
+                        CurrE = Hamiltonian_.GetCLEnergy();
+
+                        if (count < (Parameters_.IterMax - (Gap_bw_sweeps * (MC_sweeps_used_for_Avg - 1) + MC_sweeps_used_for_Avg)))
+                        {
                             Parameters_.Dflag = 'N'; //N
                         }
-                    }
+                        else
+                        {
+                            if (ED_)
+                            {
+                                Parameters_.Dflag = 'N'; //quantum observables are calculated separately.
+                            }
+                            else
+                            {
+                                Parameters_.Dflag = 'N'; //N
+                            }
+                        }
 
-                    if(!Parameters_.IgnoreFermions){
-                    Hamiltonian_.InteractionsClusterCreate(i);
-                    Hamiltonian_.DiagonalizeCluster(Parameters_.Dflag);
-                    Parameters_.mus_Cluster = Hamiltonian_.chemicalpotentialCluster(muu_prevCluster, (Parameters_.Fill/(n_orbs_*2.0)));
-                    Curr_QuantECluster = Hamiltonian_.E_QMCluster();
-                    }
+                        if(!Parameters_.IgnoreFermions){
+                            Hamiltonian_.InteractionsClusterCreate(i);
+                            Hamiltonian_.DiagonalizeCluster(Parameters_.Dflag);
+                            Parameters_.mus_Cluster = Hamiltonian_.chemicalpotentialCluster(muu_prevCluster, (Parameters_.Fill/(n_orbs_*2.0)));
+                            Curr_QuantECluster = Hamiltonian_.E_QMCluster();
+                        }
 
-                    //Ratio of Quantum partition functions
-                    /*P = [ Tr(exp(-beta(Hquant_new)))/Tr(exp(-beta(Hquant_old)))]*
+                        //Ratio of Quantum partition functions
+                        /*P = [ Tr(exp(-beta(Hquant_new)))/Tr(exp(-beta(Hquant_old)))]*
                       [exp(-beta*E_classical(New)) / exp(-beta*E_classical(old))]
                      * [sin(Theta_i(New)) / sin(Theta_i(Old)) ]*/
-                    /*exp(P12) = P
+                        /*exp(P12) = P
                   P12 = log (P)
                   */
-                    //same mu-refrence is used, otherwise engine does not work properly
-                    if(!Parameters_.IgnoreFermions){
-                    P_new = ProbCluster(muu_prevCluster*1.0, muu_prevCluster*1.0);
-                    }
-                    else{
-                     P_new=0.0;
-                    }
+                        //same mu-refrence is used, otherwise engine does not work properly
+                        if(!Parameters_.IgnoreFermions){
+                            P_new = ProbCluster(muu_prevCluster*1.0, muu_prevCluster*1.0);
+                        }
+                        else{
+                            P_new=0.0;
+                        }
 
 
-                    P12 = P_new - Parameters_.beta * ((CurrE) - (PrevE));
-                    //P12 = - Parameters_.beta*((CurrE)-(PrevE));
-                    //cout<<P12<<endl;
-                    P12 += log((sin(MFParams_.etheta(x, y)) / sin(saved_Params[0])));
+                        P12 = P_new - Parameters_.beta * ((CurrE) - (PrevE));
+                        //P12 = - Parameters_.beta*((CurrE)-(PrevE));
+                        //cout<<P12<<endl;
+                        P12 += log((sin(MFParams_.etheta[spin_no](x, y)) / sin(saved_Params[0])));
 
 
 
-                    //Heat bath algorithm [See page-129 of Prof. Elbio's Book]
-                    //Heat bath algorithm works for small changes i.e. when P~1.0
-                    //  if (Heat_Bath_Algo){
-                    //     P =P/(1.0+P);
-                    //  }
-                    //Prob_check = exp(P12)/(1.0+exp(P12));
+                        //Heat bath algorithm [See page-129 of Prof. Elbio's Book]
+                        //Heat bath algorithm works for small changes i.e. when P~1.0
+                        //  if (Heat_Bath_Algo){
+                        //     P =P/(1.0+P);
+                        //  }
+                        //Prob_check = exp(P12)/(1.0+exp(P12));
 
-                    //Metropolis Algotithm
-                    // if (Metropolis_Algo){
-                    //    P=min(1.0,P);
-                    // }
-                    //Prob_check = min(1.0,exp(P12));
-                    if(Parameters_.Metropolis_Algorithm){
-                        Prob_check = min(1.0,exp(P12));
-                    }
-                    else{
-                        Prob_check =exp(P12)/(1.0+exp(P12));
-                    }
+                        //Metropolis Algotithm
+                        // if (Metropolis_Algo){
+                        //    P=min(1.0,P);
+                        // }
+                        //Prob_check = min(1.0,exp(P12));
+                        if(Parameters_.Metropolis_Algorithm){
+                            Prob_check = min(1.0,exp(P12));
+                        }
+                        else{
+                            Prob_check =exp(P12)/(1.0+exp(P12));
+                        }
 
-                    /*
+                        /*
        * VON NEUMANN's REJECTING METHOD:
        * Random number < P -----> ACCEPT
        * Random number > P -----> REJECT
        */
 
-                    //ACCEPTED
-                    if (Prob_check > ( MFParams_.random1()) )
-                    {
-                        Parameters_.AccCount[0]++;
-                        act = 1;
-                        if (ED_)
+                        //ACCEPTED
+                        if (Prob_check > ( MFParams_.random1()) )
                         {
-                            PrevE = CurrE;
+                            Parameters_.AccCount[0]++;
+                            act = 1;
+                            if (ED_)
+                            {
+                                PrevE = CurrE;
 
-                            if(!Parameters_.IgnoreFermions){
-                            Prev_QuantECluster = Curr_QuantECluster;
-                            Hamiltonian_.copy_eigs_Cluster(1);
-                            muu_prevCluster = Parameters_.mus_Cluster;
+                                if(!Parameters_.IgnoreFermions){
+                                    Prev_QuantECluster = Curr_QuantECluster;
+                                    Hamiltonian_.copy_eigs_Cluster(1);
+                                    muu_prevCluster = Parameters_.mus_Cluster;
+                                }
                             }
                         }
-                    }
 
-                    //REJECTED
-                    else
-                    {
-                        Parameters_.AccCount[1]++;
-                        act = 0;
-                        MFParams_.etheta(x, y) = saved_Params[0];
-                        MFParams_.ephi(x, y) = saved_Params[1];
-                        MFParams_.Moment_Size(x, y) = saved_Params[2];
-                    }
+                        //REJECTED
+                        else
+                        {
+                            Parameters_.AccCount[1]++;
+                            act = 0;
+                            MFParams_.etheta[spin_no](x, y) = saved_Params[0];
+                            MFParams_.ephi[spin_no](x, y) = saved_Params[1];
+                            MFParams_.Moment_Size[spin_no](x, y) = saved_Params[2];
+                        }
 
-                    // if ((act == 1) && (count<1000)) {
+                        // if ((act == 1) && (count<1000)) {
 
-                    //muu = Hamiltonian_.chemicalpotential(Parameters_.mus,Parameters_.Fill);
-                    //Parameters_.mus = Parameters_.mus*0.999 + muu*0.001;
-                    //Parameters_.mus = muu;
-                    //}
+                        //muu = Hamiltonian_.chemicalpotential(Parameters_.mus,Parameters_.Fill);
+                        //Parameters_.mus = Parameters_.mus*0.999 + muu*0.001;
+                        //Parameters_.mus = muu;
+                        //}
 
-                } //MC_DOF_TYPE
+                    } //MC_DOF_TYPE
 
+                }//Spin_no
             } // site loop
 
             //      if (act == 1) {
@@ -374,7 +379,7 @@ void MCEngine::RUN_MC()
                 if (ED_ == false)
                 {
 
-                 /* No diagonalization for Full system is done
+                    /* No diagonalization for Full system is done
                     //TCA is used
                     Parameters_.Dflag = 'V';
                     Hamiltonian_.InteractionsCreate();
@@ -391,9 +396,9 @@ void MCEngine::RUN_MC()
                     assert(ED_);
 
                     if(!Parameters_.IgnoreFermions){
-                    Parameters_.mus = Parameters_.mus_Cluster;
-                    Hamiltonian_.eigs_ = Hamiltonian_.eigsCluster_;
-                    Hamiltonian_.Ham_ = Hamiltonian_.HamCluster_;
+                        Parameters_.mus = Parameters_.mus_Cluster;
+                        Hamiltonian_.eigs_ = Hamiltonian_.eigsCluster_;
+                        Hamiltonian_.Ham_ = Hamiltonian_.HamCluster_;
                     }
                 }
                 //----------------------------------//
@@ -434,14 +439,16 @@ void MCEngine::RUN_MC()
                                 "MicroState" + string(Confs_char) + ".txt";
                         ofstream File_Out_Theta_Phi_MicroState(File_Out_theta_phi_microState.c_str());
 
-                        File_Out_Theta_Phi_MicroState << "#x" << setw(15) << "y" << setw(15) << "Theta(x,y)" << setw(15) << "Phi(x,y)"
+                        File_Out_Theta_Phi_MicroState << "#x" << setw(15) << "y" << setw(15) << "n_spin" << setw(15)<<"Theta(x,y)" << setw(15) << "Phi(x,y)"
                                                       << setw(15) << "Moment_Size(x,y)"<< endl;
                         for (int ix = 0; ix < lx_; ix++)
                         {
                             for (int iy = 0; iy < ly_; iy++)
                             {
-                                File_Out_Theta_Phi_MicroState << ix << setw(15) << iy << setw(15) << MFParams_.etheta(ix, iy) << setw(15) << MFParams_.ephi(ix, iy)
-                                                              << setw(15) << MFParams_.Moment_Size(ix, iy)<< endl;
+                                for(int i_spin=0;i_spin<Parameters_.n_Spins;i_spin++){
+                                    File_Out_Theta_Phi_MicroState << ix << setw(15) << iy << setw(15)<< i_spin << setw(15) << MFParams_.etheta[i_spin](ix, iy) << setw(15) << MFParams_.ephi[i_spin](ix, iy)
+                                            << setw(15) << MFParams_.Moment_Size[i_spin](ix, iy)<< endl;
+                                }
                             }
                         }
 
@@ -494,12 +501,14 @@ void MCEngine::RUN_MC()
 
         temp_ = temp_ - Parameters_.d_Temp;
 
-        File_Out_Theta_Phi << "#x" << setw(15) << "y" << setw(15) << "Theta_avg(x,y)" << setw(15) << "Phi_avg(x,y)" << endl;
+        File_Out_Theta_Phi << "#x" << setw(15) << "y" << setw(15) << "n_spin" << setw(15) << "Theta_avg(x,y)" << setw(15) << "Phi_avg(x,y)" << endl;
         for (int ix = 0; ix < lx_; ix++)
         {
             for (int iy = 0; iy < ly_; iy++)
             {
-                File_Out_Theta_Phi << ix << setw(15) << iy << setw(15) << MFParams_.etheta_avg(ix, iy) / (Confs_used * 1.0) << setw(15) << MFParams_.ephi_avg(ix, iy) / (Confs_used * 1.0) << endl;
+                for(int i_spin=0;i_spin<Parameters_.n_Spins;i_spin++){
+                    File_Out_Theta_Phi << ix << setw(15) << iy << setw(15) <<  i_spin << setw(15) <<MFParams_.etheta_avg[i_spin](ix, iy) / (Confs_used * 1.0) << setw(15) << MFParams_.ephi_avg[i_spin](ix, iy) / (Confs_used * 1.0) << endl;
+                }
             }
         }
 

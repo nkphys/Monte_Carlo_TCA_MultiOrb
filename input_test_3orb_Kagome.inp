@@ -1,13 +1,13 @@
 PBC=1
 Perform_ED=1
-Xsite=16
-Ysite=1
-N_Orbs=1
+Xsite=6
+Ysite=6
+N_Orbs=3
 TwistedBoundaryCond_mx=0
 TwistedBoundaryCond_my=0
 TBC_cellsX=32
 TBC_cellsY=32
-Filling_per_site=0.375
+Filling_per_site=1.125
 RandomSeed=2
 Fix_mu=0
 fixed_mu_value=-2.8
@@ -15,20 +15,57 @@ Boltzman_constant=1.0
 
 RandomDisorderSeed=413
 Disorder_Strength=0.0
-J_Hund0=-1.8
-J_Hund1=-10
+J_Hund0=-0
+J_Hund1=-0
+J_Hund2=-0
 OnSiteE0=0.0
 OnSiteE1=0.0
+OnSiteE2=0.0
 lambda_lattice=0.0
-K=-0.5
-K2pxpy=0.0
-K2pxmy=0.0
+
+
+No_of_classical_spins_per_site=3
+
+K_0X_0Y_row0=0 -1 -1
+K_0X_0Y_row1=0 0 -1
+K_0X_0Y_row2=0 0 0
+
+
+K_1X_0Y_row0=0 0 0
+K_1X_0Y_row1=-1 0 0
+K_1X_0Y_row2=0 0 0
+
+
+K_0X_1Y_row0=0 0 0
+K_0X_1Y_row1=0 0 0
+K_0X_1Y_row2=-1 0 0
+
+
+K_m1X_1Y_row0=0 0 0
+K_m1X_1Y_row1=0 0 0
+K_m1X_1Y_row2=0 -1 0
+
+
 IgnoreFermions=0
 NnBiquadratic_A=0.0
 
 
-Nearest_Neigh_Hopping_X_basis_row0=-1.0
-Nearest_Neigh_Hopping_Y_basis_row0=-1.0
+Hopping_0X_0Y_row0=0 -1 -1
+Hopping_0X_0Y_row1=0 0 -1
+Hopping_0X_0Y_row2=0 0 0
+
+Hopping_1X_0Y_row0=0 0 0
+Hopping_1X_0Y_row1=-1 0 0
+Hopping_1X_0Y_row2=0 0 0
+
+Hopping_0X_1Y_row0=0 0 0
+Hopping_0X_1Y_row1=0 0 0
+Hopping_0X_1Y_row2=-1 0 0
+
+Hopping_m1X_1Y_row0=0 0 0
+Hopping_m1X_1Y_row1=0 0 0
+Hopping_m1X_1Y_row2=0 -1 0
+
 
 
 SavingMicroscopicStates=1

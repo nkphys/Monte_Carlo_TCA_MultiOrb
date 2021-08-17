@@ -74,7 +74,7 @@ int main(int argc, char *argv[]) {
         //double mu = chemicalpotential(0.5, temp);
         // Observables_.Get_Non_Interacting_dispersion();
         //Hamiltonian_.Ham_.print();
-        Observables_.Calculate_Akw();
+        //Observables_.Calculate_Akw();
         //Observables_.Calculate_Akw_at_w(mu);
         //Observables_.Calculate_Nw();
 
@@ -114,12 +114,15 @@ int main(int argc, char *argv[]) {
             initial_mu_guess=Parameters_.fixed_mu_value;
         }
 
-        Parameters_.mus = Hamiltonian_.chemicalpotential(initial_mu_guess, Parameters_.Fill);
+        cout<<"Calculating mu"<<endl;
+        Parameters_.mus = Hamiltonian_.chemicalpotential(initial_mu_guess, Parameters_.Fill/(Parameters_.n_orbs*2.0));
         QuantE = Hamiltonian_.E_QM();
         cout <<"Quantum_E = "<<QuantE<<endl;
 
         Observables_.Calculate_Nw();
-        Observables_.Calculate_Akw();
+        //Observables_.Calculate_Akw();
+        Observables_.Calculate_Akw_faster();
+        Observables_.Calculate_Skw();
 
     }
 
