@@ -141,6 +141,7 @@ void MFParams::FieldThrow(int site, int Spin_no, string mc_dof_type)
     {
 
         //**********
+
         ephi[Spin_no](a, b) += 2 * Pi * (random1() - 0.5) * MC_Window;
         if( ephi[Spin_no](a,b) < 0.0) {ephi[Spin_no](a,b) += 2.0*Pi; }
         if( ephi[Spin_no](a,b) >=2.0*Pi) {ephi[Spin_no](a,b) -= 2.0*Pi;}
@@ -155,9 +156,23 @@ void MFParams::FieldThrow(int site, int Spin_no, string mc_dof_type)
             etheta[Spin_no](a,b) = 2.0*Pi - etheta[Spin_no](a,b);
             ephi[Spin_no](a,b) = fmod( ephi[Spin_no](a,b) + Pi, 2.0*Pi );
         }
-        //**********
+  
+
+      //**********
+
+
+
+	//**********
+//	ephi[Spin_no](a, b) = random1()*2*Pi;
+//	etheta[Spin_no](a, b) = random1()*Pi;
+
+	//************
+
+
     }
 
+
+//	Push_to_Prob_Distributions( etheta[Spin_no](a,b), ephi[Spin_no](a,b) );
 
 } // ----------
 

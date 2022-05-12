@@ -73,8 +73,7 @@ void MCEngine::RUN_MC()
 
     double Curr_Cluster_CLE;
 
-    int COUNT_STEP=5000;
-    int Window_Change_Count=200;
+    int COUNT_STEP=1000;
     //starting with a random guess
 
     //while (temp_ >= Parameters_.temp_min)
@@ -359,7 +358,7 @@ void MCEngine::RUN_MC()
             //       Parameters_.mus = Parameters_.mus*0.99f + muu*0.01f;
             //      }
 
-            if ((count % Window_Change_Count == 0))
+            if ((count % COUNT_STEP == 0))
             {
                 MFParams_.Adjust_MCWindow();
             }
@@ -497,11 +496,8 @@ void MCEngine::RUN_MC()
                                       << setw(16) << Observables_.SiSj_Mean(0, 1) / (Confs_used * 1.0)
                                       << setw(16) << sqrt(((Observables_.SiSj_square_Mean(1, 0) / (Confs_used * 1.0)) - ((Observables_.SiSj_Mean(1, 0) * Observables_.SiSj_Mean(1, 0)) / (Confs_used * Confs_used * 1.0))))
 
-                                      << setw(16) << sqrt(((Observables_.SiSj_square_Mean(0, 1) / (Confs_used * 1.0)) - ((Observables_.SiSj_Mean(0, 1) * Observables_.SiSj_Mean(0, 1)) / (Confs_used * Confs_used * 1.0))))<<setw(16)<<
-				//------------------------------
-				
-					Observables_.AVG_Total_Energy / (Confs_used * 1.0) 
-					<< setw(16)<< sqrt(((Observables_.AVG_Total_Energy_sqr / (Confs_used * 1.0)) - ((Observables_.AVG_Total_Energy * Observables_.AVG_Total_Energy) / (Confs_used * Confs_used * 1.0)))) << setw(16)<< endl;
+                                      << setw(16) << sqrt(((Observables_.SiSj_square_Mean(0, 1) / (Confs_used * 1.0)) - ((Observables_.SiSj_Mean(0, 1) * Observables_.SiSj_Mean(0, 1)) / (Confs_used * Confs_used * 1.0))))
+                                      << endl;
                 }
             }
 

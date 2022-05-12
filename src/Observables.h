@@ -114,11 +114,13 @@ void Observables::Calculate_Skw(){
     double omega_min, omega_max, d_omega;
     double eta = 0.02;
     omega_min = 0;
-    omega_max = Hamiltonian_.eigs_[Hamiltonian_.Ham_.n_row()-1] - Hamiltonian_.eigs_[0] +1.0;
+    omega_max = 7.0;//Hamiltonian_.eigs_[Hamiltonian_.Ham_.n_row()-1] - Hamiltonian_.eigs_[0] +1.0;
     d_omega = 0.005;
     //---------------------------------------------------//
 
 
+    int mx = Parameters_.TBC_mx;
+    int my = Parameters_.TBC_my;
 
     int omega_index_max = int((omega_max - omega_min) / (d_omega));
 
@@ -225,8 +227,16 @@ void Observables::Calculate_Skw(){
             int kx_i, ky_i;
 
             int n1, n2;
-            Mat_1_intpair k_path;
+            Mat_1_intpair k_path, k_path2;
             pair_int temp_pair;
+
+            for(int n1_=0;n1_<lx_;n1_++){
+                for(int n2_=0;n2_<ly_;n2_++){
+                    temp_pair.first = n1_;
+                    temp_pair.second = n2_;
+                    k_path2.push_back(temp_pair);
+                }
+            }
 
             //Run assuming Kagome
             if((ly_==lx_)) { //For triangular lattices (example Kagome)
@@ -317,55 +327,59 @@ void Observables::Calculate_Skw(){
             }
 
 
-                //----------------------------------
-                cout<<"PRINTING PATH"<<endl;
-                for (int k_point = 0; k_point < k_path.size(); k_point++)
+            //----------------------------------
+            cout<<"PRINTING PATH"<<endl;
+            for (int k_point = 0; k_point < k_path.size(); k_point++)
+            {
+                cout<<k_path[k_point].first<< "   "<<k_path[k_point].second<<endl;
+            }
+
+
+            //----k_path done-------
+
+
+            int r_posx, r_posy;
+            string fileout_path = fileout_temp + "_orbs" + to_string(orb1)+ "_"+ to_string(orb2) + "_for_Full.txt";
+            ofstream file_Skw_out_path(fileout_path.c_str());
+
+
+            file_Skw_out_path<<"#k_point   n1     n2    omega_val    omega_ind       Skw[orb1, orb2]"<<endl;
+            for (int k_point = 0; k_point < k_path2.size(); k_point++)
+            {
+
+                n1 = k_path2[k_point].first;
+                n2 = k_path2[k_point].second;
+
+                kx = (2.0 * PI * n1) / (1.0 * Parameters_.lx);
+                ky = (2.0 * PI * n2) / (1.0 * Parameters_.ly);
+
+                for (int omega_ind = 0; omega_ind < omega_index_max; omega_ind++)
                 {
-                    cout<<k_path[k_point].first<< "   "<<k_path[k_point].second<<endl;
-                }
+                    temp_Skw = zero_complex;
 
-
-                //----k_path done-------
-
-
-                int r_posx, r_posy;
-                string fileout_path = fileout_temp + "_orbs" + to_string(orb1)+ "_"+ to_string(orb2) + "_for_GivenPath.txt";
-                ofstream file_Skw_out_path(fileout_path.c_str());
-
-
-                file_Skw_out_path<<"#k_point   n1     n2    omega_val    omega_ind       Skw[orb1, orb2]"<<endl;
-                for (int k_point = 0; k_point < k_path.size(); k_point++)
-                {
-
-                    n1 = k_path[k_point].first;
-                    n2 = k_path[k_point].second;
-
-                    kx = (2.0 * PI * n1) / (1.0 * Parameters_.lx);
-                    ky = (2.0 * PI * n2) / (1.0 * Parameters_.ly);
-
-                    for (int omega_ind = 0; omega_ind < omega_index_max; omega_ind++)
+                    for (int r = 0; r < Coordinates_.ncells_; r++)
                     {
-                        temp_Skw = zero_complex;
+                        r_posx = Coordinates_.indx_cellwise(r);
+                        r_posy = Coordinates_.indy_cellwise(r);
 
-                        for (int r = 0; r < Coordinates_.ncells_; r++)
-                        {
-                            r_posx = Coordinates_.indx_cellwise(r);
-                            r_posy = Coordinates_.indy_cellwise(r);
-
-                            temp_Skw += one_complex *
-                                    exp(iota_complex * (kx * (r_posx) +
-                                                        ky * (r_posy) )) *
-                                    A_mat[r][omega_ind];
-                        }
-
-                        //Use 1:4:6(7)----for gnuplot
-                        file_Skw_out_path <<k_point<<"   "<<n1 << "   " << n2  << "    " << omega_min + (d_omega * omega_ind) << "   " << omega_ind << "    "
-                                         << temp_Skw.real()
-                                         << endl;
+                        temp_Skw += one_complex *
+                                exp(iota_complex * (kx * (r_posx) +
+                                                    ky * (r_posy) )) *
+                                A_mat[r][omega_ind];
                     }
-                    file_Skw_out_path << endl;
 
+                    //Use 1:4:6(7)----for gnuplot
+
+                    //kx+(((1.0 * mx)/ (1.0 * Parameters_.TBC_cellsX))*(2.0*PI/Parameters_.lx))<<"   "<<ky+(((1.0 * my)/ (1.0 * Parameters_.TBC_cellsY))*(2.0*PI/Parameters_.ly))<<"   "<<kx_i << "   " << ky_i << "   " << (ky_i * Parameters_.lx) + kx_i << "    " << omega_min + (d_omega * omega_ind) << "   " << omega_ind << "    "
+                    //<< temp_up.real() << "    " << temp_dn.real() << "
+                    file_Skw_out_path << kx+(((1.0 * mx)/ (1.0 * Parameters_.TBC_cellsX))*(2.0*PI/Parameters_.lx))<<"   "<<ky+(((1.0 * my)/ (1.0 * Parameters_.TBC_cellsY))*(2.0*PI/Parameters_.ly))
+                                      << "    " <<n1<<"    "<<n2<< "    "<<(n2 * Parameters_.lx) + n1 <<"   "<<omega_min + (d_omega * omega_ind) << "   " << omega_ind << "    "
+                                     << temp_Skw.real()<<"   "<<temp_Skw.imag()
+                                     << endl;
                 }
+                file_Skw_out_path << endl;
+
+            }
 
 
 
@@ -393,8 +407,8 @@ void Observables::Calculate_Akw_faster()
     string fileout_temp = "Akw";
     double omega_min, omega_max, d_omega;
     double eta = 0.01;
-    omega_min = Hamiltonian_.eigs_[0] -1.0;
-    omega_max = Hamiltonian_.eigs_[Hamiltonian_.Ham_.n_row()-1] +1.0;
+    omega_min = -5.0;//Hamiltonian_.eigs_[0] -1.0;
+    omega_max = 3.0;//Hamiltonian_.eigs_[Hamiltonian_.Ham_.n_row()-1] +1.0;
     d_omega = 0.005;
     //---------------------------------------------------//
 
@@ -507,6 +521,8 @@ void Observables::Calculate_Akw_faster()
         complex<double> temp_dn;
         double kx, ky;
         int kx_i, ky_i;
+        int mx = Parameters_.TBC_mx;
+        int my = Parameters_.TBC_my;
 
 
         for (int kx_i_ = 0; kx_i_ <= Parameters_.lx; kx_i_++)
@@ -516,8 +532,11 @@ void Observables::Calculate_Akw_faster()
 
                 kx_i = kx_i_;
                 ky_i = ky_i_;
-                kx = (2.0 * PI * kx_i) / (1.0 * Parameters_.lx);
-                ky = (2.0 * PI * ky_i) / (1.0 * Parameters_.ly);
+                //kx = ((2.0 * PI * (1.0*kx_i  +  Parameters_.BoundaryConnection*((1.0 * mx)/ (1.0 * Parameters_.TBC_cellsX)) ) ) / (1.0 * Parameters_.lx));
+                //Parameters_.BoundaryConnection*(2.0 * (1.0 * mx) * PI / (1.0 * Parameters_.TBC_cellsX));
+
+                kx = ((2.0 * PI * (1.0*kx_i ) ) / (1.0 * Parameters_.lx));
+                ky = (2.0 * PI * (1.0*ky_i )) / (1.0 * Parameters_.ly);
 
                 for (int omega_ind = 0; omega_ind < omega_index_max; omega_ind++)
                 {
@@ -542,7 +561,7 @@ void Observables::Calculate_Akw_faster()
                     }
 
                     //Use 3:4:6(7)----for gnuplot
-                    file_Akw_out <<kx_i << "   " << ky_i << "   " << (ky_i * Parameters_.lx) + kx_i << "    " << omega_min + (d_omega * omega_ind) << "   " << omega_ind << "    "
+                    file_Akw_out <<kx+(((1.0 * mx)/ (1.0 * Parameters_.TBC_cellsX))*(2.0*PI/Parameters_.lx))<<"   "<<ky+(((1.0 * my)/ (1.0 * Parameters_.TBC_cellsY))*(2.0*PI/Parameters_.ly))<<"   "<<kx_i << "   " << ky_i << "   " << (ky_i * Parameters_.lx) + kx_i << "    " << omega_min + (d_omega * omega_ind) << "   " << omega_ind << "    "
                                 << temp_up.real() << "    " << temp_dn.real() << "    "
                                 << endl;
                 }
@@ -661,7 +680,7 @@ void Observables::Calculate_Akw_faster()
                     }
 
                     //Use 1:4:6(7)----for gnuplot
-                    file_Akw_out_path <<k_point<<"   "<<n1 << "   " << n2  << "    " << omega_min + (d_omega * omega_ind) << "   " << omega_ind << "    "
+                    file_Akw_out_path <<k_point<<"   "<<kx+(((1.0 * mx)/ (1.0 * Parameters_.TBC_cellsX))*(2.0*PI/Parameters_.lx)) << "   " << ky+(((1.0 * my)/ (1.0 * Parameters_.TBC_cellsY))*(2.0*PI/Parameters_.ly))  << "    " << omega_min + (d_omega * omega_ind) << "   " << omega_ind << "    "
                                      << temp_up.real() << "    " << temp_dn.real() << "    "
                                      << endl;
                 }

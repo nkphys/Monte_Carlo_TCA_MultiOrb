@@ -6,7 +6,7 @@ EXENAME  = sf
 ### ------ Personal PC compilation ------------
 CXX     = g++
 CPPFLAGS = -std=c++11
-LDFLAGS  = -llapack
+LDFLAGS  = -llapack -lblas
 
 ### ------ Newton compilation ------------
 ### MUST USE: module load gcc/4.8.2

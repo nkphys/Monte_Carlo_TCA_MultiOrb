@@ -17,6 +17,7 @@ public:
     double Ax, Ay;
     Mat_1_doub J_Hund, OnSiteE;
     double lambda_lattice;
+    double hz_mag;
     double k_const;
     double Disorder_Strength, RandomDisorderSeed;
     double Boltzman_constant;
@@ -28,6 +29,7 @@ public:
     Matrix<double> hopping_0X_0Y, hopping_1X_0Y, hopping_0X_1Y, hopping_m1X_1Y;
     Matrix<double> K_0X_0Y, K_1X_0Y, K_0X_1Y, K_m1X_1Y;
 
+    Matrix<double> J_px, J_py, J_mxpy; //only b/w Spin_i=0 and Spin_j=0
     Mat_1_string MC_DOF;
 
     bool Cooling_;
@@ -139,12 +141,12 @@ void Parameters::Initialize(string inputfile_)
     lx = int(matchstring(inputfile_, "Xsite"));
     ly = int(matchstring(inputfile_, "Ysite"));
 
-    TBC_mx = int(matchstring(inputfile_, "TwistedBoundaryCond_mx"));
     n_orbs = int(matchstring(inputfile_, "N_Orbs"));
     n_Spins = int(matchstring(inputfile_, "No_of_classical_spins_per_site"));
     J_Hund.resize(n_orbs);
     OnSiteE.resize(n_orbs);
 
+    TBC_mx = int(matchstring(inputfile_, "TwistedBoundaryCond_mx"));
     TBC_my = int(matchstring(inputfile_, "TwistedBoundaryCond_my"));
     TBC_cellsX = int(matchstring(inputfile_, "TBC_cellsX"));
     TBC_cellsY = int(matchstring(inputfile_, "TBC_cellsY"));
@@ -154,6 +156,7 @@ void Parameters::Initialize(string inputfile_)
     fix_mu = matchstring(inputfile_, "Fix_mu");
     fixed_mu_value = double(matchstring(inputfile_, "fixed_mu_value")) * 1.0;
     BoundaryConnection = double(matchstring(inputfile_, "PBC"));
+    hz_mag = double(matchstring(inputfile_, "hz_mag"));
 
     assert(SavingMicroscopicStates_int == 1 ||
            SavingMicroscopicStates_int == 0);
@@ -274,7 +277,38 @@ void Parameters::Initialize(string inputfile_)
         }
     }
 
+
+
+
+
+
+
+      J_px.resize(3,3);J_py.resize(3,3);J_mxpy.resize(3,3);
+      string J_px_file_str = matchstring2(inputfile_, "Nearest_neighbour_Exc_px_Matrix_file_name");
+      string J_py_file_str = matchstring2(inputfile_, "Nearest_neighbour_Exc_py_Matrix_file_name");
+      string J_mxpy_file_str = matchstring2(inputfile_, "Nearest_neighbour_Exc_mxpy_Matrix_file_name");
+      
+      	ifstream J_px_stream(J_px_file_str.c_str());
+	ifstream J_py_stream(J_py_file_str.c_str());
+	ifstream J_mxpy_stream(J_mxpy_file_str.c_str());
+      
+
+	for(int alpha=0;alpha<3;alpha++){
+	for(int beta=0;beta<3;beta++){
+	J_px_stream>>J_px(alpha,beta);
+	J_py_stream>>J_py(alpha,beta);
+	J_mxpy_stream>>J_mxpy(alpha,beta);
+        }
+	}
+	 
+
+
+
     //Superexchange matrices done---------------
+
+
+
+
 
 
     lambda_lattice = matchstring (inputfile_, "lambda_lattice");

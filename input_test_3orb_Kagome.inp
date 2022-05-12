@@ -3,10 +3,10 @@ Perform_ED=1
 Xsite=6
 Ysite=6
 N_Orbs=3
-TwistedBoundaryCond_mx=0
-TwistedBoundaryCond_my=0
-TBC_cellsX=32
-TBC_cellsY=32
+TwistedBoundaryCond_mx=1
+TwistedBoundaryCond_my=1
+TBC_cellsX=2
+TBC_cellsY=2
 Filling_per_site=1.125
 RandomSeed=2
 Fix_mu=0
@@ -46,7 +46,7 @@ K_m1X_1Y_row1=0 0 0
 K_m1X_1Y_row2=0 -1 0
 
 
-IgnoreFermions=0
+IgnoreFermions=1
 NnBiquadratic_A=0.0
 
 
@@ -81,7 +81,7 @@ Temperature_Values=6 0.5 0.1 0.05 0.01 0.001 0.0001
 Temperature=0.0001
 
 Metropolis_Algo=1
-MaxMCsweeps=1000
+MaxMCsweeps=300
 Last_n_sweeps_for_measurement=20
 Measurement_after_each_m_sweeps=5
 
