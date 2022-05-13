@@ -47,11 +47,15 @@ int main(int argc, char *argv[]) {
 
     MFParams MFParams_(Parameters_,Coordinates_,Generator_, Generator2_);
 
+	//assert(false);
+
+    //double wait;
+   //cin>>wait;
     Hamiltonian Hamiltonian_(Parameters_,Coordinates_,CoordinatesCluster_,MFParams_);
 
+	//assert(false);
 
     Observables Observables_(Parameters_,Coordinates_,MFParams_,Hamiltonian_);
-
 
 
 
@@ -84,6 +88,8 @@ int main(int argc, char *argv[]) {
 
      cout<<setprecision(9);
      MCEngine MCEngine_(Parameters_,Coordinates_,MFParams_,Hamiltonian_,Observables_);
+
+     //assert(false);
 
      Observables_.Initialize();     // Set All Observables to zero
 

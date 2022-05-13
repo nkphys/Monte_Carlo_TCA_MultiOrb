@@ -77,6 +77,8 @@ void MCEngine::RUN_MC()
     int Window_Change_Count=200;
     //starting with a random guess
 
+//	assert(false);
+
     //while (temp_ >= Parameters_.temp_min)
     for(int temp_point=0;temp_point<Parameters_.Temp_values.size();temp_point++){
         temp_ = Parameters_.Temp_values[temp_point];

@@ -21,9 +21,9 @@ public:
 
     {
         Initialize();
-        Hoppings();
-        HTBCreate();
-        HTBClusterCreate();
+      //  Hoppings();
+      //  HTBCreate();
+      //  HTBClusterCreate();
     }
 
     void Initialize();                                     //::DONE
@@ -297,6 +297,9 @@ void Hamiltonian::Initialize()
     int space = 2 * ncells_ * n_orbs_;
     int spaceCluster = 2 * ncells_cluster* n_orbs_;
 
+
+
+   if(!Parameters_.IgnoreFermions){
     HTB_.resize(space, space);
     Ham_.resize(space, space);
     HTBCluster_.resize(spaceCluster, spaceCluster);
@@ -316,6 +319,12 @@ void Hamiltonian::Initialize()
     eigs_saved_.resize(space);
     eigsCluster_.resize(spaceCluster);
     eigsCluster_saved_.resize(spaceCluster);
+
+
+    Hoppings();
+    HTBCreate();
+    HTBClusterCreate();
+    }
 
 } // ----------
 

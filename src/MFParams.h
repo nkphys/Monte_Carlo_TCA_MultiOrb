@@ -208,9 +208,9 @@ void MFParams::initialize()
     etheta.resize(Parameters_.n_Spins);
     ephi.resize(Parameters_.n_Spins);
     Moment_Size.resize(Parameters_.n_Spins);
-    Sz.resize(Parameters_.n_Spins);
-    Sx.resize(Parameters_.n_Spins);
-    Sy.resize(Parameters_.n_Spins);
+    //Sz.resize(Parameters_.n_Spins);
+    //Sx.resize(Parameters_.n_Spins);
+    //Sy.resize(Parameters_.n_Spins);
 
 
     for(int Spin_no=0;Spin_no<Parameters_.n_Spins;Spin_no++){
@@ -219,9 +219,9 @@ void MFParams::initialize()
         etheta[Spin_no].resize(lx_, ly_);
         ephi[Spin_no].resize(lx_, ly_);
         Moment_Size[Spin_no].resize(lx_, ly_);
-        Sz[Spin_no].resize(lx_, ly_);
-        Sx[Spin_no].resize(lx_, ly_);
-        Sy[Spin_no].resize(lx_, ly_);
+        //Sz[Spin_no].resize(lx_, ly_);
+        //Sx[Spin_no].resize(lx_, ly_);
+        //Sy[Spin_no].resize(lx_, ly_);
     }
 
 
