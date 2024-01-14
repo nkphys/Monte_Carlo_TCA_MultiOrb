@@ -1,5 +1,5 @@
 t_scale=1.0
-alpha=0.2
+alpha=0.0
 JHund=10.0
 
 t=$(echo "${t_scale}*(1.0 - ${alpha})" | bc -l)

@@ -23,6 +23,7 @@ OnSiteE1=0.0
 OnSiteE2=0.0
 lambda_lattice=0.0
 
+hz_mag=0.0
 
 No_of_classical_spins_per_site=3
 
