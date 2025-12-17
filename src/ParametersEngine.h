@@ -17,7 +17,7 @@ public:
     double Ax, Ay;
     Mat_1_doub J_Hund, OnSiteE;
     double lambda_lattice;
-    double hz_mag;
+    double hz_mag, Delta_z;
     double k_const;
     double Disorder_Strength, RandomDisorderSeed;
     double Boltzman_constant;
@@ -26,7 +26,7 @@ public:
     bool Read_Seed_from_file_;
     string Seed_file_name_;
 
-    Matrix<double> hopping_0X_0Y, hopping_1X_0Y, hopping_0X_1Y, hopping_m1X_1Y;
+    Matrix<double> hopping_0X_0Y, hopping_1X_0Y, hopping_0X_1Y, hopping_m1X_1Y, hopping_m1X_m1Y;
     Matrix<double> K_0X_0Y, K_1X_0Y, K_0X_1Y, K_m1X_1Y;
 
     Matrix<double> J_px, J_py, J_mxpy; //only b/w Spin_i=0 and Spin_j=0
@@ -157,6 +157,7 @@ void Parameters::Initialize(string inputfile_)
     fixed_mu_value = double(matchstring(inputfile_, "fixed_mu_value")) * 1.0;
     BoundaryConnection = double(matchstring(inputfile_, "PBC"));
     hz_mag = double(matchstring(inputfile_, "hz_mag"));
+    Delta_z = double(matchstring(inputfile_, "Delta_z"));
 
     assert(SavingMicroscopicStates_int == 1 ||
            SavingMicroscopicStates_int == 0);
@@ -211,37 +212,48 @@ void Parameters::Initialize(string inputfile_)
     hopping_1X_0Y.resize(n_orbs,n_orbs);
     hopping_0X_1Y.resize(n_orbs,n_orbs);
     hopping_m1X_1Y.resize(n_orbs,n_orbs);
+    hopping_m1X_m1Y.resize(n_orbs,n_orbs);
 
-    string Hopping_0X_0Y, Hopping_1X_0Y, Hopping_0X_1Y, Hopping_m1X_1Y;
-    string Hop_0X_0Y_str, Hop_1X_0Y_str, Hop_0X_1Y_str, Hop_m1X_1Y_str;
+    string Hopping_0X_0Y, Hopping_1X_0Y, Hopping_0X_1Y, Hopping_m1X_1Y, Hopping_m1X_m1Y;
+    string Hop_0X_0Y_str, Hop_1X_0Y_str, Hop_0X_1Y_str, Hop_m1X_1Y_str, Hop_m1X_m1Y_str ;
     for (int m=0;m<n_orbs;m++){
 
         Hop_0X_0Y_str = "Hopping_0X_0Y_row" + to_string(m);
         Hop_1X_0Y_str = "Hopping_1X_0Y_row" + to_string(m);
         Hop_0X_1Y_str = "Hopping_0X_1Y_row" + to_string(m);
         Hop_m1X_1Y_str = "Hopping_m1X_1Y_row" + to_string(m);
+        Hop_m1X_m1Y_str = "Hopping_m1X_m1Y_row" + to_string(m);
 
         Hopping_0X_0Y=matchstring2(inputfile_, Hop_0X_0Y_str);
         Hopping_1X_0Y=matchstring2(inputfile_, Hop_1X_0Y_str);
         Hopping_0X_1Y=matchstring2(inputfile_, Hop_0X_1Y_str);
         Hopping_m1X_1Y=matchstring2(inputfile_, Hop_m1X_1Y_str);
+        Hopping_m1X_m1Y=matchstring2(inputfile_, Hop_m1X_m1Y_str);
 
         stringstream stream_Hopping_0X_0Y(Hopping_0X_0Y);
         stringstream stream_Hopping_1X_0Y(Hopping_1X_0Y);
         stringstream stream_Hopping_0X_1Y(Hopping_0X_1Y);
         stringstream stream_Hopping_m1X_1Y(Hopping_m1X_1Y);
+        stringstream stream_Hopping_m1X_m1Y(Hopping_m1X_m1Y);
+
 
         for(int n=0;n<n_orbs;n++){
             stream_Hopping_0X_0Y >> hopping_0X_0Y(m,n);
+            //
             stream_Hopping_1X_0Y >> hopping_1X_0Y(m,n);
             stream_Hopping_0X_1Y >> hopping_0X_1Y(m,n);
             stream_Hopping_m1X_1Y >> hopping_m1X_1Y(m,n);
+            stream_Hopping_m1X_m1Y >> hopping_m1X_m1Y(m,n);
+
         }
     }
 
     //Hopping matrices done---------------
-
-
+    hopping_0X_0Y.print();
+    hopping_1X_0Y.print();
+    hopping_0X_1Y.print();
+    hopping_m1X_1Y.print();
+    hopping_m1X_m1Y.print();
 
     //Superexchange matrices -------------------
     K_0X_0Y.resize(n_Spins,n_Spins);
@@ -279,6 +291,14 @@ void Parameters::Initialize(string inputfile_)
 
 
 
+    cout<<"K_0X_0Y :"<<endl;
+    K_0X_0Y.print();
+    cout<<"K_1X_0Y :"<<endl;
+    K_1X_0Y.print();
+    cout<<"K_0X_1Y :"<<endl;
+    K_0X_1Y.print();
+    cout<<"K_m1X_1Y :"<<endl;
+    K_m1X_1Y.print();
 
 
 

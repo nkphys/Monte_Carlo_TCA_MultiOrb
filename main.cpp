@@ -68,8 +68,8 @@ int main(int argc, char *argv[]) {
         //Hamiltonian_.Check_Hermiticity();
         Hamiltonian_.Diagonalize('V');
         int temp=Coordinates_.nbasis_*Parameters_.Fill*2.0;
-        cout<<"mu for n=4 = "<<0.5*(Hamiltonian_.eigs_[temp-1] + Hamiltonian_.eigs_[temp])<<"   "<<
-             Hamiltonian_.eigs_[temp-1]<<"   "<<Hamiltonian_.eigs_[temp]<<endl;
+        //cout<<"mu for n=4 = "<<0.5*(Hamiltonian_.eigs_[temp-1] + Hamiltonian_.eigs_[temp])<<"   "<<
+        //    Hamiltonian_.eigs_[temp-1]<<"   "<<Hamiltonian_.eigs_[temp]<<endl;
         Parameters_.mus=0.5*(Hamiltonian_.eigs_[temp-1] + Hamiltonian_.eigs_[temp]);
         double Quantum_E=Hamiltonian_.E_QM();
         double Classical_E=Hamiltonian_.GetCLEnergy();
@@ -95,7 +95,8 @@ int main(int argc, char *argv[]) {
 
      MCEngine_.RUN_MC();      // Monte-Carlo Engine
 
-     Observables_.Calculate_Nw();
+
+    // Observables_.Calculate_Nw();
 
     }
 

@@ -30,6 +30,8 @@ public:
     void Hoppings();                                       //::DONE
     double GetCLEnergy();                                  //::DONE
     double Get_Relative_E(int & site_no, int & spin_no, double & theta_old, double & phi_old, double & moment_size_old);
+    double Get_Relative_E_old(int & site_no, int & spin_no, double & theta_old, double & phi_old, double & moment_size_old);
+
     void InteractionsCreate();                             //::DONE
     void InteractionsClusterCreate(int Center_site);       //::DONE
     void Check_Hermiticity();                              //::DONE
@@ -369,12 +371,12 @@ double Hamiltonian::E_QMCluster()
 } // ----------
 
 
-double Hamiltonian::Get_Relative_E(int & site_no, int & spin_no, double & theta_old, double & phi_old, double & moment_size_old){
+double Hamiltonian::Get_Relative_E_old(int & site_no, int & spin_no, double & theta_old, double & phi_old, double & moment_size_old){
 
 
 
 double EPS_=0.00000001;
-assert(n_Spins_==1);
+//assert(n_Spins_==1);
 double EClassical=0.0;
 int Spin_i=spin_no;
 int i=site_no;
@@ -405,7 +407,7 @@ double sx_site, sy_site, sz_site, sx_old_site, sy_old_site, sz_old_site;
 	
 		//magnetic field
 		EClassical += -Parameters_.hz_mag*(spins_cell[2]-spins_cell_old[2]);	
-
+        EClassical += Parameters_.Delta_z*(spins_cell[2]*spins_cell[2]-spins_cell_old[2]*spins_cell_old[2]);
 
                 cell = Coordinates_.neigh(i, 0); //+x
 		_ix = Coordinates_.indx_cellwise(cell);
@@ -531,17 +533,165 @@ return EClassical;
 }
 
 
+
+double Hamiltonian::Get_Relative_E(int & site_no, int & spin_no, double & theta_old, double & phi_old, double & moment_size_old){
+
+
+
+    double EPS_=0.00000001;
+    double EClassical=0.0;
+    int Spin_i=spin_no;
+    int i=site_no;
+    int _ix, _iy;
+    int _jx, _jy;
+    double ei,ai;
+    int cell;
+
+    Mat_1_doub spins_cell_old, spins_cell, spins_neigh;
+    spins_cell_old.resize(3);spins_cell.resize(3); spins_neigh.resize(3);
+
+    double sx_site, sy_site, sz_site, sx_old_site, sy_old_site, sz_old_site;
+    _ix = Coordinates_.indx_cellwise(i);
+    _iy = Coordinates_.indy_cellwise(i);
+
+    ei = MFParams_.etheta[Spin_i](_ix,_iy);
+    ai = MFParams_.ephi[Spin_i](_ix, _iy);
+
+    spins_cell[0]=MFParams_.Moment_Size[Spin_i](_ix, _iy) * cos(ai) * sin(ei);
+    spins_cell[1] = MFParams_.Moment_Size[Spin_i](_ix, _iy) * sin(ai) * sin(ei);
+    spins_cell[2] = MFParams_.Moment_Size[Spin_i](_ix, _iy) * cos(ei);
+
+
+    spins_cell_old[0] = moment_size_old * cos(phi_old) * sin(theta_old);
+    spins_cell_old[1] = moment_size_old * sin(phi_old) * sin(theta_old);
+    spins_cell_old[2] = moment_size_old * cos(theta_old);
+
+
+
+    //magnetic field
+    EClassical += -Parameters_.hz_mag*(spins_cell[2]-spins_cell_old[2]);
+    EClassical += Parameters_.Delta_z*(spins_cell[2]*spins_cell[2]-spins_cell_old[2]*spins_cell_old[2]);
+
+
+    //same cell =======================
+    _jx = _ix;
+    _jy = _iy;
+    for(int Spin_j=0;Spin_j<n_Spins_;Spin_j++){
+        ei = MFParams_.etheta[Spin_j](_jx,_jy);
+        ai = MFParams_.ephi[Spin_j](_jx, _jy);
+        spins_neigh[0] = MFParams_.Moment_Size[Spin_j](_jx, _jy) * cos(ai) * sin(ei);
+        spins_neigh[1] = MFParams_.Moment_Size[Spin_j](_jx, _jy) * sin(ai) * sin(ei);
+        spins_neigh[2] = MFParams_.Moment_Size[Spin_j](_ix, _iy) * cos(ei);
+        for(int c=0;c<3;c++){
+            EClassical += 1.0 *(Parameters_.K_0X_0Y(Spin_j,Spin_i)*(spins_cell[c]-spins_cell_old[c])*spins_neigh[c]);
+        }
+    }
+
+    //+x =======================
+    cell = Coordinates_.neigh(i, 0); //+x
+    _jx = Coordinates_.indx_cellwise(cell);
+    _jy = Coordinates_.indy_cellwise(cell);
+    for(int Spin_j=0;Spin_j<n_Spins_;Spin_j++){
+    ei = MFParams_.etheta[Spin_j](_jx,_jy);
+    ai = MFParams_.ephi[Spin_j](_jx, _jy);
+    spins_neigh[0] = MFParams_.Moment_Size[Spin_j](_jx, _jy) * cos(ai) * sin(ei);
+    spins_neigh[1] = MFParams_.Moment_Size[Spin_j](_jx, _jy) * sin(ai) * sin(ei);
+    spins_neigh[2] = MFParams_.Moment_Size[Spin_j](_ix, _iy) * cos(ei);
+    for(int c=0;c<3;c++){
+    EClassical += 1.0 *(Parameters_.K_1X_0Y(Spin_j,Spin_i)*(spins_cell[c]-spins_cell_old[c])*spins_neigh[c]);
+    }
+    }
+
+    //-x =======================
+    _jx = (_ix -1 +lx_)%lx_ ;
+    _jy = (_jx -0 +ly_)%ly_ ;
+    for(int Spin_j=0;Spin_j<n_Spins_;Spin_j++){
+        ei = MFParams_.etheta[Spin_j](_jx,_jy);
+        ai = MFParams_.ephi[Spin_j](_jx, _jy);
+        spins_neigh[0] = MFParams_.Moment_Size[Spin_j](_jx, _jy) * cos(ai) * sin(ei);
+        spins_neigh[1] = MFParams_.Moment_Size[Spin_j](_jx, _jy) * sin(ai) * sin(ei);
+        spins_neigh[2] = MFParams_.Moment_Size[Spin_j](_ix, _iy) * cos(ei);
+        for(int c=0;c<3;c++){
+            EClassical += 1.0 *(Parameters_.K_1X_0Y(Spin_i,Spin_j)*(spins_cell[c]-spins_cell_old[c])*spins_neigh[c]);
+        }
+    }
+
+
+
+    //+y =======================
+    _jx = (_ix -0 +lx_)%lx_ ;
+    _jy = (_jx +1 +ly_)%ly_ ;
+    for(int Spin_j=0;Spin_j<n_Spins_;Spin_j++){
+        ei = MFParams_.etheta[Spin_j](_jx,_jy);
+        ai = MFParams_.ephi[Spin_j](_jx, _jy);
+        spins_neigh[0] = MFParams_.Moment_Size[Spin_j](_jx, _jy) * cos(ai) * sin(ei);
+        spins_neigh[1] = MFParams_.Moment_Size[Spin_j](_jx, _jy) * sin(ai) * sin(ei);
+        spins_neigh[2] = MFParams_.Moment_Size[Spin_j](_ix, _iy) * cos(ei);
+        for(int c=0;c<3;c++){
+            EClassical += 1.0 *(Parameters_.K_0X_1Y(Spin_j,Spin_i)*(spins_cell[c]-spins_cell_old[c])*spins_neigh[c]);
+        }
+    }
+
+    //-y =======================
+    _jx = (_ix -0 +lx_)%lx_ ;
+    _jy = (_jx -1 +ly_)%ly_ ;
+    for(int Spin_j=0;Spin_j<n_Spins_;Spin_j++){
+        ei = MFParams_.etheta[Spin_j](_jx,_jy);
+        ai = MFParams_.ephi[Spin_j](_jx, _jy);
+        spins_neigh[0] = MFParams_.Moment_Size[Spin_j](_jx, _jy) * cos(ai) * sin(ei);
+        spins_neigh[1] = MFParams_.Moment_Size[Spin_j](_jx, _jy) * sin(ai) * sin(ei);
+        spins_neigh[2] = MFParams_.Moment_Size[Spin_j](_ix, _iy) * cos(ei);
+        for(int c=0;c<3;c++){
+            EClassical += 1.0 *(Parameters_.K_0X_1Y(Spin_i,Spin_j)*(spins_cell[c]-spins_cell_old[c])*spins_neigh[c]);
+        }
+    }
+
+
+    //-x+y =======================
+    _jx = (_ix -1 +lx_)%lx_ ;
+    _jy = (_jx +1 +ly_)%ly_ ;
+    for(int Spin_j=0;Spin_j<n_Spins_;Spin_j++){
+        ei = MFParams_.etheta[Spin_j](_jx,_jy);
+        ai = MFParams_.ephi[Spin_j](_jx, _jy);
+        spins_neigh[0] = MFParams_.Moment_Size[Spin_j](_jx, _jy) * cos(ai) * sin(ei);
+        spins_neigh[1] = MFParams_.Moment_Size[Spin_j](_jx, _jy) * sin(ai) * sin(ei);
+        spins_neigh[2] = MFParams_.Moment_Size[Spin_j](_ix, _iy) * cos(ei);
+        for(int c=0;c<3;c++){
+            EClassical += 1.0 *(Parameters_.K_m1X_1Y(Spin_j,Spin_i)*(spins_cell[c]-spins_cell_old[c])*spins_neigh[c]);
+        }
+    }
+
+    //+x-y =======================
+    _jx = (_ix +1 +lx_)%lx_ ;
+    _jy = (_jx -1 +ly_)%ly_ ;
+    for(int Spin_j=0;Spin_j<n_Spins_;Spin_j++){
+        ei = MFParams_.etheta[Spin_j](_jx,_jy);
+        ai = MFParams_.ephi[Spin_j](_jx, _jy);
+        spins_neigh[0] = MFParams_.Moment_Size[Spin_j](_jx, _jy) * cos(ai) * sin(ei);
+        spins_neigh[1] = MFParams_.Moment_Size[Spin_j](_jx, _jy) * sin(ai) * sin(ei);
+        spins_neigh[2] = MFParams_.Moment_Size[Spin_j](_ix, _iy) * cos(ei);
+        for(int c=0;c<3;c++){
+            EClassical += 1.0 *(Parameters_.K_m1X_1Y(Spin_i,Spin_j)*(spins_cell[c]-spins_cell_old[c])*spins_neigh[c]);
+        }
+    }
+
+
+    return EClassical;
+}
+
+
+
 double Hamiltonian::GetCLEnergy()
 {
 
 
-    assert(n_Spins_==1);
+    //assert(n_Spins_==1);
     double EClassical;
-    int cell;
+    int neigh;
     double ei, ai, ej, aj;
 
-    Mat_1_doub spins_neigh, spins_cell;
-    spins_neigh.resize(3); spins_cell.resize(3);	
+    Mat_1_doub spins_neigh, spins_ref;
+    spins_neigh.resize(3); spins_ref.resize(3);
 
 
     // Classical Energy
@@ -549,45 +699,76 @@ double Hamiltonian::GetCLEnergy()
 
     int _ix, _iy;
     int _jx, _jy;
-    for (int i = 0; i < ncells_; i++)
+    for (int i = 0; i < ncells_; i++) //ref
     {
 	_ix = Coordinates_.indx_cellwise(i);
         _iy = Coordinates_.indy_cellwise(i);
 
 
-        for(int Spin_i=0;Spin_i<n_Spins_;Spin_i++){
-		ei = MFParams_.etheta[Spin_i](_ix, _iy);
-         	ai = MFParams_.ephi[Spin_i](_ix, _iy);
-		
-		spins_cell[0]=MFParams_.Moment_Size[Spin_i](_ix, _iy) * cos(ai) * sin(ei);
-		spins_cell[1]=MFParams_.Moment_Size[Spin_i](_ix, _iy) * sin(ai) * sin(ei);
-		spins_cell[2]=MFParams_.Moment_Size[Spin_i](_ix, _iy) * cos(ei);
+        for(int Spin_i=0;Spin_i<n_Spins_;Spin_i++){ //ref
+
+
+            ei = MFParams_.etheta[Spin_i](_ix, _iy);
+            ai = MFParams_.ephi[Spin_i](_ix, _iy);
+
+            spins_ref[0]=MFParams_.Moment_Size[Spin_i](_ix, _iy) * cos(ai) * sin(ei);
+            spins_ref[1]=MFParams_.Moment_Size[Spin_i](_ix, _iy) * sin(ai) * sin(ei);
+            spins_ref[2]=MFParams_.Moment_Size[Spin_i](_ix, _iy) * cos(ei);
+
+            EClassical += -Parameters_.hz_mag*spins_ref[2];
+            EClassical += Parameters_.Delta_z*spins_ref[2]*spins_ref[2];
+
+            for(int Spin_j=0;Spin_j<n_Spins_;Spin_j++){ //neigh
 
 
                 //On-site b/w classical spins,
                 
-/*
-		cell = i;
-                EClassical += 1.0 * Parameters_.K_0X_0Y(Spin_i,Spin_j)*( (sx_[Spin_i][i] * sx_[Spin_j][cell]) + (sy_[Spin_i][i] * sy_[Spin_j][cell]) + (1.0 * sz_[Spin_i][i] * sz_[Spin_j][cell]));
+                neigh = i;
+                _jx=_ix;
+                _jy=_iy;
+                ej = MFParams_.etheta[Spin_j](_jx, _jy);
+                aj = MFParams_.ephi[Spin_j](_jx, _jy);
+                spins_neigh[0]=MFParams_.Moment_Size[Spin_j](_jx, _jy) * cos(aj) * sin(ej);
+                spins_neigh[1]=MFParams_.Moment_Size[Spin_j](_jx, _jy) * sin(aj) * sin(ej);
+                spins_neigh[2]=MFParams_.Moment_Size[Spin_j](_jx, _jy) * cos(ej);
+                EClassical += 1.0 * Parameters_.K_0X_0Y(Spin_j,Spin_i)*( spins_ref[0]*spins_neigh[0] + spins_ref[1]*spins_neigh[1] + spins_ref[2]*spins_neigh[2]);
 
 
-                cell = Coordinates_.neigh(i, 0); //+x
-                EClassical += 1.0 * Parameters_.K_1X_0Y(Spin_i,Spin_j)*( (sx_[Spin_i][i] * sx_[Spin_j][cell]) + (sy_[Spin_i][i] * sy_[Spin_j][cell]) + (1.0 * sz_[Spin_i][i] * sz_[Spin_j][cell]));
+                neigh = Coordinates_.neigh(i, 0); //+x
+                _jx=(_ix+1+lx_)%lx_;
+                _jy=_iy;
+                ej = MFParams_.etheta[Spin_j](_jx, _jy);
+                aj = MFParams_.ephi[Spin_j](_jx, _jy);
+                spins_neigh[0]=MFParams_.Moment_Size[Spin_j](_jx, _jy) * cos(aj) * sin(ej);
+                spins_neigh[1]=MFParams_.Moment_Size[Spin_j](_jx, _jy) * sin(aj) * sin(ej);
+                spins_neigh[2]=MFParams_.Moment_Size[Spin_j](_jx, _jy) * cos(ej);
+                EClassical += 1.0 * Parameters_.K_1X_0Y(Spin_j,Spin_i)*( spins_ref[0]*spins_neigh[0] + spins_ref[1]*spins_neigh[1] + spins_ref[2]*spins_neigh[2]);
 
 
-                cell = Coordinates_.neigh(i, 2); //+y
-                EClassical += Parameters_.K_0X_1Y(Spin_i,Spin_j) * ((sx_[Spin_i][i] * sx_[Spin_j][cell]) + (sy_[Spin_i][i] * sy_[Spin_j][cell]) + (1.0 * sz_[Spin_i][i] * sz_[Spin_j][cell]));
+                neigh = Coordinates_.neigh(i, 2); //+y
+                _jx=(_ix+0+lx_)%lx_;
+                _jy=(_iy+1+ly_)%ly_;
+                ej = MFParams_.etheta[Spin_j](_jx, _jy);
+                aj = MFParams_.ephi[Spin_j](_jx, _jy);
+                spins_neigh[0]=MFParams_.Moment_Size[Spin_j](_jx, _jy) * cos(aj) * sin(ej);
+                spins_neigh[1]=MFParams_.Moment_Size[Spin_j](_jx, _jy) * sin(aj) * sin(ej);
+                spins_neigh[2]=MFParams_.Moment_Size[Spin_j](_jx, _jy) * cos(ej);
+                EClassical += 1.0 * Parameters_.K_0X_1Y(Spin_j,Spin_i)*( spins_ref[0]*spins_neigh[0] + spins_ref[1]*spins_neigh[1] + spins_ref[2]*spins_neigh[2]);
 
-                cell = Coordinates_.neigh(i,5); //mxpy
-                EClassical += Parameters_.K_m1X_1Y(Spin_i,Spin_j) * ((sx_[Spin_i][i] * sx_[Spin_j][cell]) + (sy_[Spin_i][i] * sy_[Spin_j][cell]) + (1.0 * sz_[Spin_i][i] * sz_[Spin_j][cell]));
+                neigh = Coordinates_.neigh(i,5); //mxpy
+                _jx=(_ix-1+lx_)%lx_;
+                _jy=(_iy+1+ly_)%ly_;
+                ej = MFParams_.etheta[Spin_j](_jx, _jy);
+                aj = MFParams_.ephi[Spin_j](_jx, _jy);
+                spins_neigh[0]=MFParams_.Moment_Size[Spin_j](_jx, _jy) * cos(aj) * sin(ej);
+                spins_neigh[1]=MFParams_.Moment_Size[Spin_j](_jx, _jy) * sin(aj) * sin(ej);
+                spins_neigh[2]=MFParams_.Moment_Size[Spin_j](_jx, _jy) * cos(ej);
+                EClassical += 1.0 * Parameters_.K_m1X_1Y(Spin_j,Spin_i)*( spins_ref[0]*spins_neigh[0] + spins_ref[1]*spins_neigh[1] + spins_ref[2]*spins_neigh[2]);
 
-*/
-
-
-		EClassical += -Parameters_.hz_mag*spins_cell[2];
 
 
 
+        /*
 		 cell = Coordinates_.neigh(i, 0); //+x
                 _jx = Coordinates_.indx_cellwise(cell);
                 _jy = Coordinates_.indy_cellwise(cell);
@@ -637,11 +818,12 @@ double Hamiltonian::GetCLEnergy()
                 }
 
 
-
+*/
 
 
 
         }
+    }
     }
 
 
@@ -729,7 +911,7 @@ void Hamiltonian::InteractionsClusterCreate(int Center_site)
 
 
             if(n_Spins_==n_orbs_){
-            Spin_no==orb;
+            Spin_no=orb;
             }
             else{Spin_no=0;}
 
@@ -832,9 +1014,9 @@ void Hamiltonian::Diagonalize(char option)
 
     // Ham_.print();
 
-    //  for(int i=0;i<eigs_.size();i++){
-    //    cout<<eigs_[i]<<endl;
-    //}
+      for(int i=0;i<eigs_.size();i++){
+        cout<<i<<"  "<<eigs_[i]<<endl;
+    }
 }
 
 void Hamiltonian::DiagonalizeCluster(char option)
@@ -911,14 +1093,16 @@ void Hamiltonian::HTBCreate()
         for (int spin=0; spin<2; spin++){
             for(int orb1=0;orb1<n_orbs_;orb1++){
                 for(int orb2=0;orb2<n_orbs_;orb2++){
-                    if(Parameters_.hopping_0X_0Y(orb1,orb2)!=0.0){
+                    if(Parameters_.hopping_0X_0Y(orb2,orb1)!=0.0){
                         a = Coordinates_.Nbasis(lx_pos,ly_pos,orb1) + ncells_*n_orbs_*spin;
                         b = Coordinates_.Nbasis(mx_pos,my_pos,orb2) + ncells_*n_orbs_*spin;
                         assert(a != b);
                         if (a != b)
                         {
-                            HTB_(b, a) = complex<double>(1.0 *Parameters_.hopping_0X_0Y(orb1,orb2), 0.0);
+                            HTB_(b, a) = complex<double>(1.0 *Parameters_.hopping_0X_0Y(orb2,orb1), 0.0);
+                            //cout<<HTB_(b, a)<<endl;
                             HTB_(a, b) = conj(HTB_(b, a));
+                            //cout<<HTB_(a, b)<<endl;
                         }
                     }
                 }
@@ -947,14 +1131,16 @@ void Hamiltonian::HTBCreate()
         for (int spin=0; spin<2; spin++){
             for(int orb1=0;orb1<n_orbs_;orb1++){
                 for(int orb2=0;orb2<n_orbs_;orb2++){
-                    if(Parameters_.hopping_1X_0Y(orb1,orb2)!=0.0){
+                    if(Parameters_.hopping_1X_0Y(orb2,orb1)!=0.0){
                         a = Coordinates_.Nbasis(lx_pos,ly_pos,orb1) + ncells_*n_orbs_*spin;
                         b = Coordinates_.Nbasis(mx_pos,my_pos,orb2) + ncells_*n_orbs_*spin;
                         assert(a != b);
                         if (a != b)
                         {
-                            HTB_(b, a) = complex<double>(1.0 *Parameters_.hopping_1X_0Y(orb1,orb2), 0.0) * phasex*TBC_phasex_TS;
+                            HTB_(b, a) = complex<double>(1.0 *Parameters_.hopping_1X_0Y(orb2,orb1), 0.0) * phasex*TBC_phasex_TS;
+                           // cout<<HTB_(b, a)<<endl;
                             HTB_(a, b) = conj(HTB_(b, a));
+                           // cout<<HTB_(a, b)<<endl;
                         }
                     }
                 }
@@ -986,14 +1172,14 @@ void Hamiltonian::HTBCreate()
             for (int spin = 0; spin < 2; spin++){
                 for(int orb1=0;orb1<n_orbs_;orb1++){
                     for(int orb2=0;orb2<n_orbs_;orb2++){
-                        if(Parameters_.hopping_0X_1Y(orb1,orb2)!=0.0){
+                        if(Parameters_.hopping_0X_1Y(orb2,orb1)!=0.0){
 
                             a = Coordinates_.Nbasis(lx_pos,ly_pos,orb1) + ncells_*n_orbs_*spin;
                             b = Coordinates_.Nbasis(mx_pos,my_pos,orb2) + ncells_*n_orbs_*spin;
                             assert(a != b);
                             if (a != b)
                             {
-                                HTB_(b, a) = complex<double>(1.0*Parameters_.hopping_0X_1Y(orb1,orb2), 0.0) * phasey*TBC_phasey_TS;
+                                HTB_(b, a) = complex<double>(1.0*Parameters_.hopping_0X_1Y(orb2,orb1), 0.0) * phasey*TBC_phasey_TS;
                                 HTB_(a, b) = conj(HTB_(b, a));
                             }
                         }
@@ -1032,20 +1218,71 @@ void Hamiltonian::HTBCreate()
             for (int spin = 0; spin < 2; spin++){
                 for(int orb1=0;orb1<n_orbs_;orb1++){
                     for(int orb2=0;orb2<n_orbs_;orb2++){
-                        if(Parameters_.hopping_m1X_1Y(orb1,orb2)!=0.0){
+                        if(Parameters_.hopping_m1X_1Y(orb2,orb1)!=0.0){
 
                             a = Coordinates_.Nbasis(lx_pos,ly_pos,orb1) + ncells_*n_orbs_*spin;
                             b = Coordinates_.Nbasis(mx_pos,my_pos,orb2) + ncells_*n_orbs_*spin;
                             assert(a != b);
                             if (a != b)
                             {
-                                HTB_(b, a) = complex<double>(1.0*Parameters_.hopping_m1X_1Y(orb1,orb2), 0.0) * phasey*phasex*TBC_phasex_TS*TBC_phasey_TS;
+                                HTB_(b, a) = complex<double>(1.0*Parameters_.hopping_m1X_1Y(orb2,orb1), 0.0) * phasey*phasex*TBC_phasex_TS*TBC_phasey_TS;
                                 HTB_(a, b) = conj(HTB_(b, a));
                             }
                         }
                     }
                 }
             }
+
+
+
+
+
+            // * -x-y direction Neighbor
+            if (ly_pos == (0))
+            {
+                phasey = Parameters_.BoundaryConnection*one_complex;//exp(iota_complex * 2.0 * (1.0 * my) * PI / (1.0 * Parameters_.TBC_cellsY));
+            }
+            else
+            {
+                phasey = one_complex;
+            }
+
+            if(lx_pos==0){
+                phasex = Parameters_.BoundaryConnection*one_complex;//exp(iota_complex * 2.0 * (-1.0 * mx) * PI / (1.0 * Parameters_.TBC_cellsX));
+            }
+            else{
+                phasex=one_complex;
+            }
+
+            TBC_phasex_TS = exp((1.0/Coordinates_.lx_ )*(iota_complex * 2.0 * (-1.0 * mx) * PI / (1.0 * Parameters_.TBC_cellsX)));
+            TBC_phasey_TS = exp((1.0/Coordinates_.ly_ )*(iota_complex * 2.0 * (-1.0 * my) * PI / (1.0 * Parameters_.TBC_cellsY)));
+
+
+            m = Coordinates_.neigh(l, 6); //-x-y neighbour cell
+            mx_pos = Coordinates_.indx_cellwise(m);
+            my_pos = Coordinates_.indy_cellwise(m);
+
+            for (int spin = 0; spin < 2; spin++){
+                for(int orb1=0;orb1<n_orbs_;orb1++){
+                    for(int orb2=0;orb2<n_orbs_;orb2++){
+                        if(Parameters_.hopping_m1X_m1Y(orb2,orb1)!=0.0){
+
+                            a = Coordinates_.Nbasis(lx_pos,ly_pos,orb1) + ncells_*n_orbs_*spin;
+                            b = Coordinates_.Nbasis(mx_pos,my_pos,orb2) + ncells_*n_orbs_*spin;
+                            assert(a != b);
+                            if (a != b)
+                            {
+                                HTB_(b, a) = complex<double>(1.0*Parameters_.hopping_m1X_m1Y(orb2,orb1), 0.0) * phasey*phasex*TBC_phasex_TS*TBC_phasey_TS;
+                                HTB_(a, b) = conj(HTB_(b, a));
+                            }
+                        }
+                    }
+                }
+            }
+
+
+
+
 
 
 
@@ -1087,14 +1324,14 @@ void Hamiltonian::HTBClusterCreate()
             for (int spin = 0; spin < 2; spin++){
                 for(int orb1=0;orb1<n_orbs_;orb1++){
                     for(int orb2=0;orb2<n_orbs_;orb2++){
-                        if(Parameters_.hopping_0X_0Y(orb1,orb2)!=0.0){
+                        if(Parameters_.hopping_0X_0Y(orb2,orb1)!=0.0){
                             a = CoordinatesCluster_.Nbasis(lx_pos,ly_pos,orb1) + ncells_cluster*n_orbs_*spin;
                             b = CoordinatesCluster_.Nbasis(mx_pos,my_pos,orb2) + ncells_cluster*n_orbs_*spin;
 
                             assert(a != b);
                             if (a != b)
                             {
-                                HTBCluster_(b, a) = complex<double>(1.0 *Parameters_.hopping_0X_0Y(orb1,orb2), 0.0);
+                                HTBCluster_(b, a) = complex<double>(1.0 *Parameters_.hopping_0X_0Y(orb2,orb1), 0.0);
                                 HTBCluster_(a, b) = conj(HTBCluster_(b, a));
                             }
                         }
@@ -1111,14 +1348,14 @@ void Hamiltonian::HTBClusterCreate()
             for (int spin = 0; spin < 2; spin++){
                 for(int orb1=0;orb1<n_orbs_;orb1++){
                     for(int orb2=0;orb2<n_orbs_;orb2++){
-                        if(Parameters_.hopping_1X_0Y(orb1,orb2)!=0.0){
+                        if(Parameters_.hopping_1X_0Y(orb2,orb1)!=0.0){
                             a = CoordinatesCluster_.Nbasis(lx_pos,ly_pos,orb1) + ncells_cluster*n_orbs_*spin;
                             b = CoordinatesCluster_.Nbasis(mx_pos,my_pos,orb2) + ncells_cluster*n_orbs_*spin;
 
                             assert(a != b);
                             if (a != b)
                             {
-                                HTBCluster_(b, a) = complex<double>(1.0 *Parameters_.hopping_1X_0Y(orb1,orb2), 0.0);
+                                HTBCluster_(b, a) = complex<double>(1.0 *Parameters_.hopping_1X_0Y(orb2,orb1), 0.0);
                                 HTBCluster_(a, b) = conj(HTBCluster_(b, a));
                             }
                         }
@@ -1137,13 +1374,13 @@ void Hamiltonian::HTBClusterCreate()
                 for (int spin = 0; spin < 2; spin++){
                     for(int orb1=0;orb1<n_orbs_;orb1++){
                         for(int orb2=0;orb2<n_orbs_;orb2++){
-                            if(Parameters_.hopping_0X_1Y(orb1,orb2)!=0.0){
+                            if(Parameters_.hopping_0X_1Y(orb2,orb1)!=0.0){
                                 a = CoordinatesCluster_.Nbasis(lx_pos,ly_pos,orb1) + ncells_cluster*n_orbs_*spin;
                                 b = CoordinatesCluster_.Nbasis(mx_pos,my_pos,orb2) + ncells_cluster*n_orbs_*spin;
                                 assert(a != b);
                                 if (a != b)
                                 {
-                                    HTBCluster_(b, a) = complex<double>(1.0 *Parameters_.hopping_0X_1Y(orb1,orb2), 0.0);
+                                    HTBCluster_(b, a) = complex<double>(1.0 *Parameters_.hopping_0X_1Y(orb2,orb1), 0.0);
                                     HTBCluster_(a, b) = conj(HTBCluster_(b, a));
                                 }
                             }
@@ -1160,13 +1397,36 @@ void Hamiltonian::HTBClusterCreate()
                 for (int spin = 0; spin < 2; spin++){
                     for(int orb1=0;orb1<n_orbs_;orb1++){
                         for(int orb2=0;orb2<n_orbs_;orb2++){
-                            if(Parameters_.hopping_m1X_1Y(orb1,orb2)!=0.0){
+                            if(Parameters_.hopping_m1X_1Y(orb2,orb1)!=0.0){
                                 a = CoordinatesCluster_.Nbasis(lx_pos,ly_pos,orb1) + ncells_cluster*n_orbs_*spin;
                                 b = CoordinatesCluster_.Nbasis(mx_pos,my_pos,orb2) + ncells_cluster*n_orbs_*spin;
                                 assert(a != b);
                                 if (a != b)
                                 {
-                                    HTBCluster_(b, a) = complex<double>(1.0 *Parameters_.hopping_m1X_1Y(orb1,orb2), 0.0);
+                                    HTBCluster_(b, a) = complex<double>(1.0 *Parameters_.hopping_m1X_1Y(orb2,orb1), 0.0);
+                                    HTBCluster_(a, b) = conj(HTBCluster_(b, a));
+                                }
+                            }
+                        }
+                    }
+                }
+
+
+                //-x-y direction
+                m = CoordinatesCluster_.neigh(l, 6);
+                mx_pos = CoordinatesCluster_.indx_cellwise(m);
+                my_pos = CoordinatesCluster_.indy_cellwise(m);
+
+                for (int spin = 0; spin < 2; spin++){
+                    for(int orb1=0;orb1<n_orbs_;orb1++){
+                        for(int orb2=0;orb2<n_orbs_;orb2++){
+                            if(Parameters_.hopping_m1X_m1Y(orb2,orb1)!=0.0){
+                                a = CoordinatesCluster_.Nbasis(lx_pos,ly_pos,orb1) + ncells_cluster*n_orbs_*spin;
+                                b = CoordinatesCluster_.Nbasis(mx_pos,my_pos,orb2) + ncells_cluster*n_orbs_*spin;
+                                assert(a != b);
+                                if (a != b)
+                                {
+                                    HTBCluster_(b, a) = complex<double>(1.0 *Parameters_.hopping_m1X_m1Y(orb2,orb1), 0.0);
                                     HTBCluster_(a, b) = conj(HTBCluster_(b, a));
                                 }
                             }

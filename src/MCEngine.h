@@ -73,8 +73,8 @@ void MCEngine::RUN_MC()
 
     double Curr_Cluster_CLE;
 
-    int COUNT_STEP=5000;
-    int Window_Change_Count=200;
+    int COUNT_STEP=50;
+    int Window_Change_Count=20;
     //starting with a random guess
 
 //	assert(false);
@@ -449,14 +449,17 @@ void MCEngine::RUN_MC()
                         ofstream File_Out_Theta_Phi_MicroState(File_Out_theta_phi_microState.c_str());
 
                         File_Out_Theta_Phi_MicroState << "#x" << setw(15) << "y" << setw(15) << "n_spin" << setw(15)<<"Theta(x,y)" << setw(15) << "Phi(x,y)"
-                                                      << setw(15) << "Moment_Size(x,y)"<< endl;
+                                                      << setw(15) << "Moment_Size(x,y)"<<setw(15) << "Sz"<<setw(15) << "Sx"<<setw(15) << "Sy"<< endl;
                         for (int ix = 0; ix < lx_; ix++)
                         {
                             for (int iy = 0; iy < ly_; iy++)
                             {
                                 for(int i_spin=0;i_spin<Parameters_.n_Spins;i_spin++){
                                     File_Out_Theta_Phi_MicroState << ix << setw(15) << iy << setw(15)<< i_spin << setw(15) << MFParams_.etheta[i_spin](ix, iy) << setw(15) << MFParams_.ephi[i_spin](ix, iy)
-                                            << setw(15) << MFParams_.Moment_Size[i_spin](ix, iy)<< endl;
+                                                                  << setw(15) << MFParams_.Moment_Size[i_spin](ix, iy)<<setw(15)<< cos(MFParams_.etheta[i_spin](ix, iy))<<setw(15)
+                                                                  << sin(MFParams_.etheta[i_spin](ix, iy))*cos(MFParams_.ephi[i_spin](ix, iy))<<setw(15)
+                                                                 << sin(MFParams_.etheta[i_spin](ix, iy))*sin(MFParams_.ephi[i_spin](ix, iy))
+                                                                  <<endl;
                                 }
                             }
                         }
