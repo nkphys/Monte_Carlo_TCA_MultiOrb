@@ -191,11 +191,8 @@ double MFParams::random2()
 void MFParams::initialize()
 {
 
-    bool Diagonal_ZigZag_Ising_alongZ=false;
-    bool Diagonal_ZigZag_Ising_alongZ_rotatedby90deg=false;
-    bool two_by_two_Plaquettes_Ising_alongZ=false;
-    bool FM_state_Ising=false;
-    bool AFM_state_Ising=false;
+    string Ansatz = Parameters_.InbuiltAnsatz;
+
     lx_ = Coordinates_.lx_;
     ly_ = Coordinates_.ly_;
 
@@ -229,10 +226,10 @@ void MFParams::initialize()
     Disorder_conf_file << "#seed=" << Parameters_.RandomDisorderSeed << " for mt19937_64 Generator is used" << endl;
     Disorder_conf_file << "#ix   iy    Dis[ix,iy]" << endl;
 
-    ofstream Initial_MC_DOF_file("Initial_MC_DOF_values");
+    ofstream Initial_MC_DOF_file("Initial_MC_DOF_values.txt");
 
     Initial_MC_DOF_file << "#seed=" << Parameters_.RandomSeed << " for mt19937_64 Generator is used" << endl;
-    Initial_MC_DOF_file << "#ix   iy   n_Spin    Theta(x,y)    Phi(x,y)      Moment_Size(x,y)" << endl;
+    Initial_MC_DOF_file << "#ix   iy   n_Spin    Theta(x,y)    Phi(x,y)      Moment_Size(x,y)     Sz      Sx        Sy" << endl;
 
 
     string temp_string;
@@ -301,7 +298,7 @@ void MFParams::initialize()
 
                     if( !Parameters_.MC_on_phi && !Parameters_.MC_on_theta){
 
-                        if(Diagonal_ZigZag_Ising_alongZ){
+                        if(Ansatz=="Diagonal_ZigZag_Ising_alongZ"){
 
                             if( ((i%4)==0) || ((i%4)==1)){
                                 spin_offset=1;
@@ -350,7 +347,7 @@ void MFParams::initialize()
                             etheta[Spin_no](i, j) = ((-1*spin_offset*1.0) + 1.0) *0.5* PI;
                         }
 
-                        if(Diagonal_ZigZag_Ising_alongZ_rotatedby90deg){
+                        if(Ansatz=="Diagonal_ZigZag_Ising_alongZ_rotatedby90deg"){
                             if( ((i%4)==0) || ((i%4)==1)){
                                 spin_offset=1;
                             }
@@ -407,7 +404,7 @@ void MFParams::initialize()
                         }
 
 
-                        if(two_by_two_Plaquettes_Ising_alongZ){
+                        if(Ansatz=="two_by_two_Plaquettes_Ising_alongZ"){
                             if( ((i%4)==0) || ((i%4)==1)){
                                 spin_offset=1;
                             }
@@ -436,15 +433,89 @@ void MFParams::initialize()
                             etheta[Spin_no](i, j) = ((-1*spin_offset*1.0) + 1.0) *0.5* PI;
                         }
 
-                        if(FM_state_Ising){
+                        if(Ansatz=="FM_state_Ising"){
                             etheta[Spin_no](i, j) = ((-1*1.0) + 1.0) *0.5* PI;
                         }
-                        if(AFM_state_Ising){
+                        if(Ansatz=="AFM_state_Ising"){
 
                             spin_offset = int(pow(-1.0, i+j));
                             etheta[Spin_no](i, j) = ((-1*spin_offset*1.0) + 1.0) *0.5* PI;
 
                         }
+
+                        if(Ansatz=="ALM_Checkerboard"){
+                            assert(Parameters_.n_Spins==2);
+                            spin_offset = int(pow(-1.0, (Spin_no+2)));
+                            etheta[Spin_no](i, j) = ((-1*spin_offset*1.0) + 1.0) *0.5* PI;
+                        }
+                        if(Ansatz=="Vortex_Checkerboard"){
+                            assert(Parameters_.n_Spins==2);
+                            if(Spin_no==0){
+                                spin_offset = int(pow(-1.0, (i+j)));
+                                etheta[Spin_no](i, j) = 0.5*PI + ((-1*spin_offset*1.0) + 1.0) *0.5* PI;
+                            }
+
+                            if(Spin_no==1){
+                            spin_offset = int(pow(-1.0, (i+j)));
+                            etheta[Spin_no](i, j) = ((-1*spin_offset*1.0) + 1.0) *0.5* PI;
+                            }
+
+                        }
+                        if(Ansatz=="4qPeak_Checkerboard"){
+                            assert(Parameters_.n_Spins==2);
+
+                            if(Spin_no==0){
+
+                                int jy_set = j/2;
+                                double theta_initial;
+                                double rot_sign;
+                                if(jy_set%2==0){
+                                theta_initial =  0.5*PI;
+                                }
+                                else{
+                                theta_initial =  -0.5*PI;
+                                }
+
+                                if(j%2==0){
+                                rot_sign= -1.0; //anticlockwise
+                                }
+                                else{
+                                rot_sign= 1.0; //clockwise
+                                }
+
+                                int ix_set = i%4;
+                                etheta[Spin_no](i, j) = theta_initial + ix_set*rot_sign*0.5*PI;
+
+
+                            }
+
+
+                            if(Spin_no==1){
+
+                                int ix_set = i/2;
+                                double theta_initial;
+                                double rot_sign;
+                                if(ix_set%2==0){
+                                    theta_initial =  -0.5*PI;
+                                }
+                                else{
+                                    theta_initial =  0.5*PI;
+                                }
+
+                                if(i%2==0){
+                                    rot_sign= -1.0; //anticlockwise
+                                }
+                                else{
+                                    rot_sign= 1.0; //clockwise
+                                }
+
+                                int jy_set = j%4;
+                                etheta[Spin_no](i, j) = theta_initial + jy_set*rot_sign*0.5*PI;
+
+                            }
+
+                        }
+
 
                     }
                 }
@@ -462,9 +533,18 @@ void MFParams::initialize()
                 for(int Spin_no=0;Spin_no<Parameters_.n_Spins;Spin_no++){
                 //                etheta(i,j) += random1()*0.05;
                 //                ephi(i,j) += random1()*0.05;
-                Initial_MC_DOF_file << i << setw(15) << j << setw(15) << Spin_no << setw(15) << etheta[Spin_no](i, j) << setw(15) << ephi[Spin_no](i, j)
-                                    << setw(15) << Moment_Size[Spin_no](i, j) << endl;
-            }
+                //Initial_MC_DOF_file << i << setw(15) << j << setw(15) << Spin_no << setw(15) << etheta[Spin_no](i, j) << setw(15) << ephi[Spin_no](i, j)
+                 //                   << setw(15) << Moment_Size[Spin_no](i, j) << endl;
+
+                Initial_MC_DOF_file << i << setw(15) << j << setw(15)<< Spin_no << setw(15) << etheta[Spin_no](i, j)  << setw(15) << ephi[Spin_no](i, j)
+                                              << setw(15) << Moment_Size[Spin_no](i, j)<<setw(15)<< cos(etheta[Spin_no](i, j))<<setw(15)
+                                              << sin(etheta[Spin_no](i, j))*cos(ephi[Spin_no](i, j))<<setw(15)
+                                              << sin(etheta[Spin_no](i, j))*sin(ephi[Spin_no](i, j))
+                                              <<endl;
+
+
+
+                }
             }
         }
     }

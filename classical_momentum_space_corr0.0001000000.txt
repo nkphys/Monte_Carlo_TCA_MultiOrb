@@ -1,0 +1,21 @@
+qx             qy   <SSQ(qx,qy)> sd(SSQ(qx,qy))
+0              0           -nan           -nan
+0         1.5708           -nan           -nan
+0        3.14159           -nan           -nan
+0        4.71239           -nan           -nan
+
+1.5708              0           -nan           -nan
+1.5708         1.5708           -nan           -nan
+1.5708        3.14159           -nan           -nan
+1.5708        4.71239           -nan           -nan
+
+3.14159              0           -nan           -nan
+3.14159         1.5708           -nan           -nan
+3.14159        3.14159           -nan           -nan
+3.14159        4.71239           -nan           -nan
+
+4.71239              0           -nan           -nan
+4.71239         1.5708           -nan           -nan
+4.71239        3.14159           -nan           -nan
+4.71239        4.71239           -nan           -nan
+

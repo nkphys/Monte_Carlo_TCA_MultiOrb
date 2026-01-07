@@ -63,6 +63,8 @@ NoOfMicroscopicStates=50
     double WindowSize, AccCount[2];
     char Dflag;
 
+    string InbuiltAnsatz;
+
     void Initialize(string inputfile_);
     double matchstring(string file, string match);
     string matchstring2(string file, string match);
@@ -300,6 +302,8 @@ void Parameters::Initialize(string inputfile_)
     cout<<"K_m1X_1Y :"<<endl;
     K_m1X_1Y.print();
 
+
+    InbuiltAnsatz = matchstring2(inputfile_, "UsingInbuiltAnsatz");
 
 
 

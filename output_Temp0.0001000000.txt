@@ -1,0 +1,4 @@
+Total 0 sweeps are performed.
+First -55 sweeps are used for thermalization and every 6 in last 55 sweeps are used for measurement.
+I_MC         S(0,1)         S(1,0)        S(Pi,0)           S(0,0)         S(Pi,Pi)     S(Pi/2,Pi/2)      < N_total >           E_CL           E_QM        E_Total             mu
+Total 0 configurations were used were measurement

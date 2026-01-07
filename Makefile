@@ -6,8 +6,8 @@ EXENAME  = sf
 ### ------ Personal PC compilation ------------
 CXX     = g++
 CPPFLAGS = -std=c++11
-LDFLAGS  = -llapack -lblas -ldl -lpthread -lm -fopenmp
-
+LDFLAGS  = -lopenblas -ldl -lpthread -lm
+#-llapack
 ### ------ Newton compilation ------------
 ### MUST USE: module load gcc/4.8.2
 #CXX = icpc  ### Or use g++ (both works!)

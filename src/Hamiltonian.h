@@ -13,6 +13,13 @@
 extern "C" void zheev_(char *, char *, int *, std::complex<double> *, int *, double *,
                        std::complex<double> *, int *, double *, int *);
 
+extern "C" void zheevr_(char *, char *, char *, int *,
+                        std::complex<double> *, int *, double *, double *,
+                        int *, int *, double *, int *,
+                        double *, std::complex<double> *, int *, int *,
+                        std::complex<double> *, int *, double *, int *,
+                        int *, int *, int *);
+
 class Hamiltonian
 {
 public:
@@ -49,6 +56,8 @@ public:
     double E_QMCluster();                 //::DONE
     void Diagonalize(char option);        //::DONE
     void DiagonalizeCluster(char option); //::DONE
+    void DiagonalizeZheevr(char option);        //::DONE
+    void DiagonalizeZheevrCluster(char option); //::DONE
     void copy_eigs(int i);                //::DONE
     void copy_eigs_Cluster(int i);        //::DONE
 
@@ -67,7 +76,7 @@ public:
     Mat_2_doub sx_, sy_, sz_;
     Matrix<double> IntraCell_Hopp, InterCell_px_Hopp, InterCell_py_Hopp, InterCell_pxmy_Hopp ;
 
-
+    double abstol_;
     double HS_factor;
 };
 
@@ -323,6 +332,7 @@ void Hamiltonian::Initialize()
     eigsCluster_saved_.resize(spaceCluster);
 
 
+    abstol_=0;
     Hoppings();
     HTBCreate();
     HTBClusterCreate();
@@ -981,6 +991,156 @@ void Hamiltonian::Check_Hermiticity()
     // cout<<"Hermiticity: "<<temp<<endl;
 }
 
+
+void Hamiltonian::DiagonalizeZheevr(char option)
+{
+
+    //extern "C" void   zheev_(char *,char *,int *,std::complex<double> *, int *, double *,
+    //                       std::complex<double> *,int *, double *, int *);
+
+    //parameters in sequence
+    char jobz = option;
+    char range = 'A';
+    char uplo = 'U'; //or 'L'
+    int n = Ham_.n_row();
+    //A done
+    int lda = Ham_.n_col();
+    double vl,vu; //not referenced if range=A
+    int il,iu; //not referenced if range=A
+    double abstol=abstol_; //does it change the speed
+    int m=n;
+
+    eigs_.resize(Ham_.n_row());
+    fill(eigs_.begin(), eigs_.end(), 0);
+
+    vector<complex<double>> Z(1);// not referenced if range=A
+    int ldz =1;
+
+    vector<int> isuppz(2*m);
+    vector<complex<double>> work(3);
+    int lwork; //lwork later fixed
+    vector<double> rwork(3 * n - 2);
+    int lrwork;
+    vector<int> iwork(3);
+    int liwork;
+    int info;
+
+
+    //query first
+    lwork = -1; lrwork=-1; liwork=-1;
+
+    zheevr_(&jobz, &range, &uplo, &n,
+            &(Ham_(0,0)), &lda,  &vl, &vu,
+            &il, &iu, &abstol, &m,
+            &(eigs_[0]), &(Z[0]), &ldz, &(isuppz[0]),
+            &(work[0]), &lwork, &(rwork[0]), &lrwork,
+            &(iwork[0]), &liwork, &info);
+    //lwork = int(real(work[0]))+1;
+    lwork = int((work[0].real()));
+    lrwork = int((rwork[0]));
+    liwork = ((iwork[0]));
+    work.resize(lwork);
+    rwork.resize(lrwork);
+    iwork.resize(liwork);
+
+
+    // real work:
+    zheevr_(&jobz, &range, &uplo, &n,
+            &(Ham_(0,0)), &lda,  &vl, &vu,
+            &il, &iu, &abstol, &m,
+            &(eigs_[0]), &(Z[0]), &ldz, &(isuppz[0]),
+            &(work[0]), &lwork, &(rwork[0]), &lrwork,
+            &(iwork[0]), &liwork, &info);
+
+    if (info != 0)
+    {
+        std::cerr << "info=" << info << "\n";
+        perror("diag: zheevr: failed with info!=0.\n");
+    }
+
+    // Ham_.print();
+
+    // for(int i=0;i<eigs_.size();i++){
+    //     cout<<i<<"  "<<eigs_[i]<<endl;
+    // }
+}
+
+
+void Hamiltonian::DiagonalizeZheevrCluster(char option)
+{
+
+    //extern "C" void   zheev_(char *,char *,int *,std::complex<double> *, int *, double *,
+    //                       std::complex<double> *,int *, double *, int *);
+
+    //parameters in sequence
+    char jobz = option;
+    char range = 'A';
+    char uplo = 'U'; //or 'L'
+    int n = HamCluster_.n_row();
+    //A done
+    int lda = HamCluster_.n_col();
+    double vl,vu; //not referenced if range=A
+    int il,iu; //not referenced if range=A
+    double abstol=abstol_; //does it change the speed
+    int m=n;
+
+    eigsCluster_.resize(HamCluster_.n_row());
+    fill(eigsCluster_.begin(), eigsCluster_.end(), 0);
+
+    vector<complex<double>> Z(1);// not referenced if range=A
+    int ldz =1;
+
+    vector<int> isuppz(2*m);
+    vector<complex<double>> work(3);
+    int lwork; //lwork later fixed
+    vector<double> rwork(3 * n - 2);
+    int lrwork;
+    vector<int> iwork(3);
+    int liwork;
+    int info;
+
+
+    //query first
+    lwork = -1; lrwork=-1; liwork=-1;
+
+    zheevr_(&jobz, &range, &uplo, &n,
+            &(HamCluster_(0,0)), &lda,  &vl, &vu,
+            &il, &iu, &abstol, &m,
+            &(eigsCluster_[0]), &(Z[0]), &ldz, &(isuppz[0]),
+            &(work[0]), &lwork, &(rwork[0]), &lrwork,
+            &(iwork[0]), &liwork, &info);
+    //lwork = int(real(work[0]))+1;
+    lwork = int((work[0].real()));
+    lrwork = int((rwork[0]));
+    liwork = ((iwork[0]));
+    work.resize(lwork);
+    rwork.resize(lrwork);
+    iwork.resize(liwork);
+
+
+    // real work:
+    zheevr_(&jobz, &range, &uplo, &n,
+            &(HamCluster_(0,0)), &lda,  &vl, &vu,
+            &il, &iu, &abstol, &m,
+            &(eigsCluster_[0]), &(Z[0]), &ldz, &(isuppz[0]),
+            &(work[0]), &lwork, &(rwork[0]), &lrwork,
+            &(iwork[0]), &liwork, &info);
+
+    if (info != 0)
+    {
+        std::cerr << "info=" << info << "\n";
+        perror("diag: zheevr: failed with info!=0.\n");
+    }
+
+    // Ham_.print();
+
+    // for(int i=0;i<eigs_.size();i++){
+    //     cout<<i<<"  "<<eigs_[i]<<endl;
+    // }
+}
+
+
+
 void Hamiltonian::Diagonalize(char option)
 {
 
@@ -1014,9 +1174,9 @@ void Hamiltonian::Diagonalize(char option)
 
     // Ham_.print();
 
-      for(int i=0;i<eigs_.size();i++){
-        cout<<i<<"  "<<eigs_[i]<<endl;
-    }
+    //   for(int i=0;i<eigs_.size();i++){
+    //     cout<<i<<"  "<<eigs_[i]<<endl;
+    // }
 }
 
 void Hamiltonian::DiagonalizeCluster(char option)

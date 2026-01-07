@@ -74,7 +74,7 @@ void MCEngine::RUN_MC()
     double Curr_Cluster_CLE;
 
     int COUNT_STEP=50;
-    int Window_Change_Count=20;
+    int Window_Change_Count=10;
     //starting with a random guess
 
 //	assert(false);
@@ -204,6 +204,7 @@ void MCEngine::RUN_MC()
             for (int i = 0; i < ncells_; i++)
             { // For each site
 
+                //cout<<"count, site : "<<count<<"  "<<i<<endl;
                 for(int spin_no=0;spin_no<Parameters_.n_Spins;spin_no++)
                 {
                     for (int mc_dof = 0; mc_dof < Parameters_.MC_DOF.size(); mc_dof++)
@@ -363,6 +364,7 @@ void MCEngine::RUN_MC()
 
             if ((count % Window_Change_Count == 0))
             {
+                cout<<"count = "<<count<<endl;
                 MFParams_.Adjust_MCWindow();
             }
 
@@ -511,6 +513,29 @@ void MCEngine::RUN_MC()
             }
 
         } // Iter Loop
+
+
+
+        if(!Parameters_.IgnoreFermions){
+            Hamiltonian_.InteractionsCreate();
+            Hamiltonian_.Diagonalize(Parameters_.Dflag);
+
+            n_states_occupied_zeroT = Coordinates_.nbasis_*(Parameters_.Fill/(n_orbs_));
+            if(!Parameters_.fix_mu){
+                initial_mu_guess = 0.5 * (Hamiltonian_.eigs_[n_states_occupied_zeroT - 1] + Hamiltonian_.eigs_[n_states_occupied_zeroT]);
+            }
+            else{
+                initial_mu_guess=Parameters_.fixed_mu_value;
+            }
+            Parameters_.mus = Hamiltonian_.chemicalpotential(initial_mu_guess, (Parameters_.Fill/(n_orbs_*2.0)));
+            Prev_QuantE = Hamiltonian_.E_QM();
+            muu_prev = Parameters_.mus;
+            Hamiltonian_.copy_eigs(1);
+            cout << "Final Quantum Energy[Full System] = " << Prev_QuantE << endl;
+            cout << "Final Total Energy[Full System] = " << PrevE + Prev_QuantE << endl;
+            cout << "Final mu=" << muu_prev << endl;
+        }
+
 
         file_out_progress << "Total " << Confs_used << " configurations were used were measurement" << endl;
 
