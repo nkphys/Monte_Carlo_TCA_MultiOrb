@@ -90,24 +90,35 @@ void MCEngine::RUN_MC()
         {
             for (int iy = 0; iy < ly_; iy++)
             {
-                Observables_.SiSjQ_Mean_(ix, iy) = zero;
-                Observables_.SiSjQ_square_Mean_(ix, iy) = zero;
-                Observables_.SiSj_square_Mean_(ix, iy) = 0.0;
-                Observables_.SiSj_Mean_(ix, iy) = 0.0;
-                for(int orb=0;orb<n_orbs_;orb++){
-                    Observables_.local_density_Mean[Coordinates_.Nbasis(ix, iy, orb)][0] = 0.0;
-                    Observables_.local_density_Mean[Coordinates_.Nbasis(ix, iy, orb)][1] = 0.0;
-                    Observables_.local_density_square_Mean[Coordinates_.Nbasis(ix, iy, orb)][0] = 0.0;
-                    Observables_.local_density_square_Mean[Coordinates_.Nbasis(ix, iy, orb)][1] = 0.0;
-                }
+                for(int s1=0;s1<Parameters_.n_Spins;s1++){
+                    for(int s2=0;s2<Parameters_.n_Spins;s2++){
+                Observables_.SiSjQ_Mean_[ix][iy][s1][s2] = zero;
+                Observables_.SiSjQ_square_Mean_[ix][iy][s1][s2] = zero;
+                Observables_.SiSj_square_Mean_[ix][iy][s1][s2] = 0.0;
+                Observables_.SiSj_Mean_[ix][iy][s1][s2] = 0.0;
+
                 //                Observables_.quantum_SiSjQ_(ix, iy) = zero;
                 //                Observables_.quantum_SiSjQ_Mean_(ix, iy) = zero;
                 //                Observables_.quantum_SiSjQ_square_Mean_(ix, iy) = zero;
                 //                Observables_.quantum_SiSj_(ix, iy) = zero;
                 //                Observables_.quantum_SiSj_Mean_(ix, iy) = zero;
                 //                Observables_.quantum_SiSj_square_Mean_(ix, iy) = zero;
-            }
+                }}
+                }
         }
+
+
+        for (int ix = 0; ix < lx_; ix++)
+        {
+            for (int iy = 0; iy < ly_; iy++)
+            {
+        for(int orb=0;orb<n_orbs_;orb++){
+            Observables_.local_density_Mean[Coordinates_.Nbasis(ix, iy, orb)][0] = 0.0;
+            Observables_.local_density_Mean[Coordinates_.Nbasis(ix, iy, orb)][1] = 0.0;
+            Observables_.local_density_square_Mean[Coordinates_.Nbasis(ix, iy, orb)][0] = 0.0;
+            Observables_.local_density_square_Mean[Coordinates_.Nbasis(ix, iy, orb)][1] = 0.0;
+        }
+            }}
         Observables_.AVG_Total_Energy = 0.0;
         Observables_.AVG_Total_Energy_sqr = 0.0;
         Observables_.Nematic_order_square_mean_ = 0.0;
@@ -375,9 +386,9 @@ void MCEngine::RUN_MC()
 
 		CurrE = Hamiltonian_.GetCLEnergy();
                     Observables_.SiSjFULL();
-                    file_out_progress << int(1.0 * count) << setw(20) << Observables_.SiSj(0, 1) << setw(16) << Observables_.SiSj(1, 0)
-                                      << setw(16) << Observables_.SiSjQ(int(lx_ / 2), 0).real()
-                                      << setw(16) << Observables_.SiSjQ(0, 0).real() << setw(16) << Observables_.SiSjQ(int(lx_ / 2), int(ly_ / 2)).real() << setw(16) << Observables_.SiSjQ(int(lx_ / 4), int(ly_ / 4)).real() << setw(16) << Hamiltonian_.ClusterDensity() << setw(16) << CurrE
+                    file_out_progress << int(1.0 * count) << setw(20) << Observables_.SiSj(0, 1, 0,0) << setw(16) << Observables_.SiSj(1, 0, 0,0)
+                                      << setw(16) << Observables_.SiSjQ(int(lx_ / 2), 0, 0,0).real()
+                                      << setw(16) << Observables_.SiSjQ(0, 0, 0,0).real() << setw(16) << Observables_.SiSjQ(int(lx_ / 2), int(ly_ / 2), 0,0).real() << setw(16) << Observables_.SiSjQ(int(lx_ / 4), int(ly_ / 4), 0,0).real() << setw(16) << Hamiltonian_.ClusterDensity() << setw(16) << CurrE
                                       << setw(16) << Curr_QuantECluster << setw(16) << Curr_QuantECluster + CurrE << setw(15) << Parameters_.mus_Cluster << endl;
                 }
             }
@@ -437,7 +448,13 @@ void MCEngine::RUN_MC()
 
                     //Just Classical Energy
 		    CurrE = Hamiltonian_.GetCLEnergy();
-                    Observables_.Total_Energy_Average(0.0, CurrE);
+
+                    if(!Parameters_.IgnoreFermions && ED_){
+                    Observables_.Total_Energy_Average(Curr_QuantECluster, CurrE);
+                    }
+                    else{
+                    Observables_.Total_Energy_Average(0, CurrE);
+                    }
                     MFParams_.Calculate_Fields_Avg();
 
                     if ((Parameters_.Saving_Microscopic_States == true) &&
@@ -472,16 +489,16 @@ void MCEngine::RUN_MC()
 
                     //double MC_steps_Avg_insitu = (1.0 + 1.0*(count - (Parameters_.IterMax - MC_steps_used_for_Avg)));
 
-                    file_out_progress << int(1.0 * count) << setw(20) << Observables_.SiSjQ_Mean(int(lx_ / 2), 0).real() / (Confs_used * 1.0)
-                                      << setw(16) << Observables_.SiSjQ_Mean(0, int(lx_ / 2)).real() / (Confs_used * 1.0)
+                    file_out_progress << int(1.0 * count) << setw(20) << Observables_.SiSjQ_Mean(int(lx_ / 2), 0, 0,0).real() / (Confs_used * 1.0)
+                                      << setw(16) << Observables_.SiSjQ_Mean(0, int(lx_ / 2), 0,0).real() / (Confs_used * 1.0)
                                       << setw(16) <<
 
                                          sqrt(
-                                             ((Observables_.SiSjQ_square_Mean(int(lx_ / 2), 0) / (Confs_used * 1.0)) -
-                                              ((Observables_.SiSjQ_Mean(int(lx_ / 2), 0) * Observables_.SiSjQ_Mean(int(lx_ / 2), 0)) / (Confs_used * Confs_used * 1.0)))
+                                             ((Observables_.SiSjQ_square_Mean(int(lx_ / 2), 0, 0,0) / (Confs_used * 1.0)) -
+                                              ((Observables_.SiSjQ_Mean(int(lx_ / 2), 0, 0,0) * Observables_.SiSjQ_Mean(int(lx_ / 2), 0, 0,0)) / (Confs_used * Confs_used * 1.0)))
                                              .real())
 
-                                      << setw(16) << sqrt(((Observables_.SiSjQ_square_Mean(0, int(lx_ / 2)) / (Confs_used * 1.0)) - ((Observables_.SiSjQ_Mean(0, int(lx_ / 2)) * Observables_.SiSjQ_Mean(0, int(lx_ / 2))) / (Confs_used * Confs_used * 1.0))).real())
+                                      << setw(16) << sqrt(((Observables_.SiSjQ_square_Mean(0, int(lx_ / 2), 0,0) / (Confs_used * 1.0)) - ((Observables_.SiSjQ_Mean(0, int(lx_ / 2), 0,0) * Observables_.SiSjQ_Mean(0, int(lx_ / 2), 0,0)) / (Confs_used * Confs_used * 1.0))).real())
                                       << setw(16) <<
 
                                          //-------------------------
@@ -500,11 +517,11 @@ void MCEngine::RUN_MC()
 
                                          //-------------------------
 
-                                         Observables_.SiSj_Mean(1, 0) / (Confs_used * 1.0)
-                                      << setw(16) << Observables_.SiSj_Mean(0, 1) / (Confs_used * 1.0)
-                                      << setw(16) << sqrt(((Observables_.SiSj_square_Mean(1, 0) / (Confs_used * 1.0)) - ((Observables_.SiSj_Mean(1, 0) * Observables_.SiSj_Mean(1, 0)) / (Confs_used * Confs_used * 1.0))))
+                                         Observables_.SiSj_Mean(1, 0, 0,0) / (Confs_used * 1.0)
+                                      << setw(16) << Observables_.SiSj_Mean(0, 1, 0,0) / (Confs_used * 1.0)
+                                      << setw(16) << sqrt(((Observables_.SiSj_square_Mean(1, 0, 0,0) / (Confs_used * 1.0)) - ((Observables_.SiSj_Mean(1, 0, 0,0) * Observables_.SiSj_Mean(1, 0, 0,0)) / (Confs_used * Confs_used * 1.0))))
 
-                                      << setw(16) << sqrt(((Observables_.SiSj_square_Mean(0, 1) / (Confs_used * 1.0)) - ((Observables_.SiSj_Mean(0, 1) * Observables_.SiSj_Mean(0, 1)) / (Confs_used * Confs_used * 1.0))))<<setw(16)<<
+                                      << setw(16) << sqrt(((Observables_.SiSj_square_Mean(0, 1, 0,0) / (Confs_used * 1.0)) - ((Observables_.SiSj_Mean(0, 1, 0,0) * Observables_.SiSj_Mean(0, 1, 0,0)) / (Confs_used * Confs_used * 1.0))))<<setw(16)<<
 				//------------------------------
 				
 					Observables_.AVG_Total_Energy / (Confs_used * 1.0) 
@@ -553,17 +570,20 @@ void MCEngine::RUN_MC()
         }
 
 
-        File_Out_Real_Space_Corr << "rx" << setw(15) << "ry" << setw(15) << "<SS(rx,ry)>" << setw(15) << "sd(SS(rx,ry))" << endl;
+        File_Out_Real_Space_Corr << "rx" << setw(15) << "ry" << setw(15) << "spin1" << setw(15) << "spin2" << setw(15)<< "<SS(rx,ry,s1,s2)>" << setw(15) << "sd(SS(rx,ry))" << endl;
 
         int temp_site_;
         for (int ix = 0; ix < lx_; ix++)
         {
             for (int iy = 0; iy < ly_; iy++)
             {
+                for(int s1=0;s1<Parameters_.n_Spins;s1++){
+                    for(int s2=0;s2<Parameters_.n_Spins;s2++){
                 temp_site_ = Coordinates_.Ncell(ix, iy);
-                File_Out_Real_Space_Corr << ix << setw(15) << iy << setw(15) << Observables_.SiSj_Mean(ix, iy) / (Confs_used * 1.0)
-                                         << setw(15) << sqrt(((Observables_.SiSj_square_Mean(ix, iy) / (Confs_used * 1.0)) - ((Observables_.SiSj_Mean(ix, iy) * Observables_.SiSj_Mean(ix, iy)) / (Confs_used * Confs_used * 1.0)))) << endl;
-            }
+                File_Out_Real_Space_Corr << ix << setw(15) << iy << setw(15) <<s1 << setw(15) << s2 << setw(15) << Observables_.SiSj_Mean(ix, iy, s1, s2) / (Confs_used * 1.0)
+                                         << setw(15) << sqrt(((Observables_.SiSj_square_Mean(ix, iy, s1, s2) / (Confs_used * 1.0)) - ((Observables_.SiSj_Mean(ix, iy, s1, s2) * Observables_.SiSj_Mean(ix, iy, s1, s2)) / (Confs_used * Confs_used * 1.0)))) << endl;
+                    }}
+                }
             File_Out_Real_Space_Corr << endl;
         }
 
@@ -574,13 +594,15 @@ void MCEngine::RUN_MC()
         {
             for (int iy = 0; iy < ly_; iy++)
             {
+                for(int s1=0;s1<Parameters_.n_Spins;s1++){
+                    for(int s2=0;s2<Parameters_.n_Spins;s2++){
                 qx = 2 * 3.141593 * ix / (lx_ * 1.0);
                 qy = 2 * 3.141593 * iy / (ly_ * 1.0);
 
                 temp_site_ = Coordinates_.Ncell(ix, iy);
-                File_Out_Q_Space_Corr << qx << setw(15) << qy << setw(15) << Observables_.SiSjQ_Mean(ix, iy).real() / (Confs_used * 1.0)
-                                      << setw(15) << sqrt(((Observables_.SiSjQ_square_Mean(ix, iy).real() / (Confs_used * 1.0)) - ((Observables_.SiSjQ_Mean(ix, iy) * Observables_.SiSjQ_Mean(ix, iy)).real() / (Confs_used * Confs_used * 1.0)))) << endl;
-            }
+                File_Out_Q_Space_Corr << qx << setw(15) << qy << setw(15) <<s1 << setw(15) << s2 << setw(15) << Observables_.SiSjQ_Mean(ix, iy, s1, s2).real() / (Confs_used * 1.0)
+                                      << setw(15) << sqrt(((Observables_.SiSjQ_square_Mean(ix, iy, s1, s2).real() / (Confs_used * 1.0)) - ((Observables_.SiSjQ_Mean(ix, iy, s1, s2) * Observables_.SiSjQ_Mean(ix, iy, s1, s2)).real() / (Confs_used * Confs_used * 1.0)))) << endl;
+                    }}}
             File_Out_Q_Space_Corr << endl;
         }
 

@@ -236,7 +236,7 @@ void MFParams::initialize()
 
     int spin_offset;
     int ix_, iy_, Spin_no_;
-
+    double temp_real;
     //Initialization
     for (int j = 0; j < ly_; j++)
     {
@@ -262,7 +262,7 @@ void MFParams::initialize()
             for (int iy = 0; iy < ly_; iy++)
             {
                 for(int Spin_no=0;Spin_no<Parameters_.n_Spins;Spin_no++){
-                Initial_Seed >> ix_ >> iy_ >> Spin_no_>>etheta[Spin_no](ix, iy) >> ephi[Spin_no](ix, iy) >> Moment_Size[Spin_no](ix, iy);
+                Initial_Seed >> ix_ >> iy_ >> Spin_no_>>etheta[Spin_no](ix, iy) >> ephi[Spin_no](ix, iy) >> Moment_Size[Spin_no](ix, iy)>>temp_real>>temp_real>>temp_real;
                 assert(ix_ == ix);
                 assert(iy_ == iy);
                 assert(Spin_no_==Spin_no);

@@ -47,21 +47,22 @@ public:
 
     void OccDensity(int tlabel);
     void DOSprint(int tlabel);
-    complex<double> SiSjQ(int i, int j);
-    double SiSj(int i, int j);
+    complex<double> SiSjQ(int i, int j, int spin1, int spin2);
+    double SiSj(int i, int j, int spin1, int spin2);
     double Omega(int i);
 
-    complex<double> SiSjQ_Mean(int i, int j);
-    complex<double> SiSjQ_square_Mean(int i, int j);
+    complex<double> SiSjQ_Mean(int i, int j, int spin1, int spin2);
+    complex<double> SiSjQ_square_Mean(int i, int j, int spin1, int spin2);
 
-    double SiSj_Mean(int i, int j);
-    double SiSj_square_Mean(int i, int j);
+    double SiSj_Mean(int i, int j, int spin1, int spin2);
+    double SiSj_square_Mean(int i, int j, int spin1, int spin2);
 
     double BandWidth;
 
 
-    Matrix<complex<double>> SiSjQ_, SiSjQ_Mean_, SiSjQ_square_Mean_;
-    Matrix<double> SiSj_Mean_, SiSj_square_Mean_;
+    Mat_4_Complex_doub SiSjQ_, SiSjQ_Mean_, SiSjQ_square_Mean_;
+    Mat_4_doub SiSj_Mean_, SiSj_square_Mean_;
+    Mat_4_doub SiSj_;
 
     double Nematic_order_mean_, Nematic_order_square_mean_;
     Parameters &Parameters_;
@@ -71,7 +72,7 @@ public:
     int lx_, ly_, ncells_, nbasis_;
     int n_orbs_, n_Spins_;
     double dosincr_, tpi_;
-    Matrix<double> SiSj_, dos;
+    Matrix<double> dos;
     Mat_2_doub sx_, sy_, sz_;
     double AVG_Total_Energy, AVG_Total_Energy_sqr;
 
@@ -963,17 +964,17 @@ void Observables::TotalOccDensity()
 
 } // ----------
 
-complex<double> Observables::SiSjQ(int i, int j) { return SiSjQ_(i, j); }
+complex<double> Observables::SiSjQ(int i, int j, int spin1, int spin2) { return SiSjQ_[i][j][spin1][spin2]; }
 
-double Observables::SiSj(int i, int j) { return SiSj_(i, j); }
+double Observables::SiSj(int i, int j, int spin1, int spin2) { return SiSj_[i][j][spin1][spin2]; }
 
-complex<double> Observables::SiSjQ_Mean(int i, int j) { return SiSjQ_Mean_(i, j); }
+complex<double> Observables::SiSjQ_Mean(int i, int j, int spin1, int spin2) { return SiSjQ_Mean_[i][j][spin1][spin2]; }
 
-complex<double> Observables::SiSjQ_square_Mean(int i, int j) { return SiSjQ_square_Mean_(i, j); }
+complex<double> Observables::SiSjQ_square_Mean(int i, int j, int spin1, int spin2) { return SiSjQ_square_Mean_[i][j][spin1][spin2]; }
 
-double Observables::SiSj_Mean(int i, int j) { return SiSj_Mean_(i, j); }
+double Observables::SiSj_Mean(int i, int j, int spin1, int spin2) { return SiSj_Mean_[i][j][spin1][spin2]; }
 
-double Observables::SiSj_square_Mean(int i, int j) { return SiSj_square_Mean_(i, j); }
+double Observables::SiSj_square_Mean(int i, int j, int spin1, int spin2) { return SiSj_square_Mean_[i][j][spin1][spin2]; }
 
 double Observables::fermi_function(int n)
 {
@@ -1118,39 +1119,46 @@ void Observables::SiSjFULL()
         }
     }
 
+
+
+    for(int spin1=0;spin1<n_Spins_;spin1++){
+        for(int spin2=0;spin2<n_Spins_;spin2++){
     for (int xr = 0; xr < lx_; xr++)
     {
         for (int yr = 0; yr < ly_; yr++)
         {
-            SiSj_(xr, yr) = double(0.0);
+            SiSj_[xr][yr][spin1][spin2] = double(0.0);
             for (int i = 0; i < lx_; i++)
             {
                 for (int j = 0; j < ly_; j++)
                 {
-                    for(int spin1=0;spin1<n_Spins_;spin1++){
-                        for(int spin2=0;spin2<n_Spins_;spin2++){
 
                             site_ = Coordinates_.Ncell(i, j);
                             ax = (i + xr) % lx_;
                             ay = (j + yr) % ly_;
                             site_p = Coordinates_.Ncell(ax, ay);
-                            SiSj_(xr, yr) += sx_[spin1][site_] * sx_[spin2][site_p];
-                            SiSj_(xr, yr) += sy_[spin1][site_] * sy_[spin2][site_p];
-                            SiSj_(xr, yr) += sz_[spin1][site_] * sz_[spin2][site_p];
+                            SiSj_[xr][yr][spin1][spin2] += sx_[spin1][site_] * sx_[spin2][site_p];
+                            SiSj_[xr][yr][spin1][spin2] += sy_[spin1][site_] * sy_[spin2][site_p];
+                            SiSj_[xr][yr][spin1][spin2] += sz_[spin1][site_] * sz_[spin2][site_p];
                         }
                     }
+
+              SiSj_[xr][yr][spin1][spin2] *= double(1.0 / (lx_ * ly_));
                 }
             }
-            SiSj_(xr, yr) *= double(1.0 / (lx_ * ly_));
+
             //cout << xr << " "<< yr<< " "<<  SiSj_(xr,yr) << endl;
         }
     }
 
+
+    for(int spin1=0;spin1<n_Spins_;spin1++){
+        for(int spin2=0;spin2<n_Spins_;spin2++){
     for (int qx = 0; qx < lx_; qx++)
     {
         for (int qy = 0; qy < ly_; qy++)
         {
-            SiSjQ_(qx, qy) = complex<double>(0.0, 0.0);
+            SiSjQ_[qx][qy][spin1][spin2] = complex<double>(0.0, 0.0);
             for (int xr = 0; xr < lx_; xr++)
             {
                 for (int yr = 0; yr < ly_; yr++)
@@ -1158,28 +1166,34 @@ void Observables::SiSjFULL()
                     phase = 2.0 * Parameters_.pi * (double(qx * xr) / double(lx_) + double(qy * yr) / double(ly_));
                     Cos_ij = cos(phase);
                     Sin_ij = sin(phase);
-                    SiSjQ_(qx, qy) += SiSj_(xr, yr) * complex<double>(Cos_ij, Sin_ij);
+                    SiSjQ_[qx][qy][spin1][spin2]  += SiSj_[xr][yr][spin1][spin2] * complex<double>(Cos_ij, Sin_ij);
                 }
             }
-            SiSjQ_(qx, qy) *= double(1.0 / (lx_ * ly_));
+            SiSjQ_[qx][qy][spin1][spin2]  *= double(1.0 / (lx_ * ly_));
             //cout << qx << " "<< qy<< " "<<  SiSjQ_(qx,qy) << endl;
         }
     }
+        }}
 
 } // ----------
 
 void Observables::SiSjQ_Average()
 {
 
+
+    for(int spin1=0;spin1<n_Spins_;spin1++){
+        for(int spin2=0;spin2<n_Spins_;spin2++){
+
     for (int qx = 0; qx < lx_; qx++)
     {
         for (int qy = 0; qy < ly_; qy++)
         {
-            SiSjQ_Mean_(qx, qy) += SiSjQ_(qx, qy);
-            SiSjQ_square_Mean_(qx, qy) += (SiSjQ_(qx, qy) * SiSjQ_(qx, qy));
+            SiSjQ_Mean_[qx][qy][spin1][spin2] += SiSjQ_[qx][qy][spin1][spin2];
+            SiSjQ_square_Mean_[qx][qy][spin1][spin2] += (SiSjQ_[qx][qy][spin1][spin2] * SiSjQ_[qx][qy][spin1][spin2]);
             //cout << qx << " "<< qy<< " "<<  SiSjQ_(qx,qy) << endl;
         }
     }
+        }}
 
 } // ----------
 
@@ -1200,18 +1214,22 @@ void Observables::quantum_SiSjQ_Average()
 void Observables::SiSj_Average()
 {
 
+
+    for(int spin1=0;spin1<n_Spins_;spin1++){
+        for(int spin2=0;spin2<n_Spins_;spin2++){
     for (int x = 0; x < lx_; x++)
     {
         for (int y = 0; y < ly_; y++)
         {
-            SiSj_Mean_(x, y) += SiSj_(x, y);
-            SiSj_square_Mean_(x, y) += (SiSj_(x, y) * SiSj_(x, y));
+            SiSj_Mean_[x][y][spin1][spin2] += SiSj_[x][y][spin1][spin2];
+            SiSj_square_Mean_[x][y][spin1][spin2] += (SiSj_[x][y][spin1][spin2] * SiSj_[x][y][spin1][spin2]);
             //cout << qx << " "<< qy<< " "<<  SiSjQ_(qx,qy) << endl;
         }
     }
+        }}
 
-    Nematic_order_mean_ += fabs(SiSj_(1, 0) - SiSj_(0, 1)) * 0.5;
-    Nematic_order_square_mean_ += (SiSj_(1, 0) - SiSj_(0, 1)) * (SiSj_(1, 0) - SiSj_(0, 1)) * 0.25;
+   // Nematic_order_mean_ += fabs(SiSj_(1, 0) - SiSj_(0, 1)) * 0.5;
+   // Nematic_order_square_mean_ += (SiSj_(1, 0) - SiSj_(0, 1)) * (SiSj_(1, 0) - SiSj_(0, 1)) * 0.25;
 
 } // ----------
 
@@ -1288,13 +1306,73 @@ void Observables::Initialize()
     Nematic_order_mean_ = 0.0;
     Nematic_order_square_mean_ = 0.0;
 
-    SiSj_.resize(lx_, ly_);
-    SiSj_Mean_.resize(lx_, ly_);
-    SiSj_square_Mean_.resize(lx_, ly_);
 
-    SiSjQ_Mean_.resize(lx_, ly_);
-    SiSjQ_square_Mean_.resize(lx_, ly_);
-    SiSjQ_.resize(lx_, ly_);
+    SiSj_.resize(lx_);
+    for(int ix=0;ix<lx_;ix++){
+        SiSj_[ix].resize(ly_);
+        for(int iy=0;iy<ly_;iy++){
+        SiSj_[ix][iy].resize(n_Spins_);
+            for(int s=0;s<n_Spins_;s++){
+            SiSj_[ix][iy][s].resize(n_Spins_);
+            }
+        }
+    }
+
+    SiSj_Mean_.resize(lx_);
+    for(int ix=0;ix<lx_;ix++){
+        SiSj_Mean_[ix].resize(ly_);
+        for(int iy=0;iy<ly_;iy++){
+            SiSj_Mean_[ix][iy].resize(n_Spins_);
+            for(int s=0;s<n_Spins_;s++){
+                SiSj_Mean_[ix][iy][s].resize(n_Spins_);
+            }
+        }
+    }
+
+    SiSj_square_Mean_.resize(lx_);
+    for(int ix=0;ix<lx_;ix++){
+        SiSj_square_Mean_[ix].resize(ly_);
+        for(int iy=0;iy<ly_;iy++){
+            SiSj_square_Mean_[ix][iy].resize(n_Spins_);
+            for(int s=0;s<n_Spins_;s++){
+                SiSj_square_Mean_[ix][iy][s].resize(n_Spins_);
+            }
+        }
+    }
+
+
+    SiSjQ_Mean_.resize(lx_);
+    for(int ix=0;ix<lx_;ix++){
+        SiSjQ_Mean_[ix].resize(ly_);
+        for(int iy=0;iy<ly_;iy++){
+            SiSjQ_Mean_[ix][iy].resize(n_Spins_);
+            for(int s=0;s<n_Spins_;s++){
+                SiSjQ_Mean_[ix][iy][s].resize(n_Spins_);
+            }
+        }
+    }
+
+    SiSjQ_square_Mean_.resize(lx_);
+    for(int ix=0;ix<lx_;ix++){
+        SiSjQ_square_Mean_[ix].resize(ly_);
+        for(int iy=0;iy<ly_;iy++){
+            SiSjQ_square_Mean_[ix][iy].resize(n_Spins_);
+            for(int s=0;s<n_Spins_;s++){
+                SiSjQ_square_Mean_[ix][iy][s].resize(n_Spins_);
+            }
+        }
+    }
+
+    SiSjQ_.resize(lx_);
+    for(int ix=0;ix<lx_;ix++){
+        SiSjQ_[ix].resize(ly_);
+        for(int iy=0;iy<ly_;iy++){
+            SiSjQ_[ix][iy].resize(n_Spins_);
+            for(int s=0;s<n_Spins_;s++){
+                SiSjQ_[ix][iy][s].resize(n_Spins_);
+            }
+        }
+    }
 
     quantum_SiSj_.resize(lx_, ly_);
     quantum_SiSj_Mean_.resize(lx_, ly_);
@@ -1308,8 +1386,14 @@ void Observables::Initialize()
     {
         for (int iy = 0; iy < ly_; iy++)
         {
-            SiSjQ_Mean_(ix, iy) = zero;
-            SiSjQ_square_Mean_(ix, iy) = zero;
+            for(int s=0;s<n_Spins_;s++){
+            for(int sp=0;sp<n_Spins_;sp++){
+            SiSjQ_Mean_[ix][iy][s][sp] = zero;
+            SiSjQ_square_Mean_[ix][iy][s][sp] = zero;
+            SiSj_Mean_[ix][iy][s][sp] = 0.0;
+            SiSj_square_Mean_[ix][iy][s][sp] = 0.0;
+            }
+            }
         }
     }
 

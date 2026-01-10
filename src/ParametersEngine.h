@@ -443,6 +443,16 @@ void Parameters::Initialize(string inputfile_)
         assert(ED_double == 0.0);
     }
 
+
+    if((lx_cluster==lx) && (ly_cluster==ly)){
+        ED_=true;
+        ED_double=1.0;
+    }
+
+    if(ED_){
+        cout<<"EXACT DIAGONALIZATION IS PERFORMED"<<endl;
+    }
+
     Read_Seed_from_file_double = double(matchstring(inputfile_, "Read_Seed_from_file"));
     if (Read_Seed_from_file_double == 1.0)
     {
