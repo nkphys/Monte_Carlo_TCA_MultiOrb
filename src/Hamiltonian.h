@@ -41,6 +41,7 @@ public:
 
     void InteractionsCreate();                             //::DONE
     void InteractionsClusterCreate(int Center_site);       //::DONE
+    void InteractionsUpdate(int site_no, int spin_no, Mat_1_doub & params_cell_old);
     void Check_Hermiticity();                              //::DONE
     void Check_up_down_symmetry();                         //::DONE
     void HTBCreate();                                      //::DONE
@@ -71,6 +72,7 @@ public:
     Matrix<complex<double>> HTBCluster_;
     Matrix<complex<double>> Ham_;
     Matrix<complex<double>> HamCluster_;
+    Matrix<complex<double>> HamUpdated_, HamUpdatedNew_;
     Matrix<double> Tx, Ty, Tpxpy, Tpxmy;
     vector<double> eigs_, eigsCluster_, eigsCluster_saved_, eigs_saved_;
     Mat_2_doub sx_, sy_, sz_;
@@ -250,7 +252,7 @@ double Hamiltonian::chemicalpotentialCluster(double muin, double filling)
                     n1 += double(1.0 / (exp((eigsCluster_[j] - mu_temp) * Parameters_.beta) + 1.0));
                 }
                 //cout <<"i  "<< i << "  n1  " << n1 << "  mu  " << mu_out<< endl;
-                if (abs(N - n1) < double(0.00001))
+                if (abs(N - n1) < double(0.0001))
                 {
                     //cout<<abs(N-n1)<<endl;
                     converged = true;
@@ -313,6 +315,8 @@ void Hamiltonian::Initialize()
    if(!Parameters_.IgnoreFermions){
     HTB_.resize(space, space);
     Ham_.resize(space, space);
+    HamUpdated_.resize(space, space);
+    HamUpdatedNew_.resize(space, space);
     HTBCluster_.resize(spaceCluster, spaceCluster);
     HamCluster_.resize(spaceCluster, spaceCluster);
     eigs_.resize(space);
@@ -894,6 +898,8 @@ void Hamiltonian::InteractionsCreate()
 void Hamiltonian::InteractionsClusterCreate(int Center_site)
 {
 
+
+      
     int x_pos, y_pos;
     double ei, ai;
     int a;
@@ -947,8 +953,67 @@ void Hamiltonian::InteractionsClusterCreate(int Center_site)
         }
     }
 
-
+    //HamClusterSaved_ = HamCluster_ ;
 } // ----------
+
+
+void Hamiltonian::InteractionsUpdate(int site_no, int spin_no, Mat_1_doub & params_cell_old)
+{
+
+    //cluster = Full system
+    assert(Parameters_.ED_);
+
+    int x_pos, y_pos;
+    double ei, ai;
+    int a;
+    int i_original;
+    int index;
+    int i_posx, i_posy;
+
+    HamUpdatedNew_ = HamUpdated_;
+
+      
+        x_pos = Coordinates_.indx_cellwise(site_no);
+        y_pos = Coordinates_.indy_cellwise(site_no);
+
+        i_original=Coordinates_.Ncell(x_pos, y_pos);
+       assert(i_original==site_no);
+
+
+         ei = MFParams_.etheta[spin_no](x_pos, y_pos);
+            ai = MFParams_.ephi[spin_no](x_pos, y_pos);
+
+            assert(n_orbs_==n_Spins_); //for now, only 1-1 b/w spins and orbitals, can be changed later
+            int orb=spin_no; //assuming 1-1 b/w spins and orbitals for now, can be changed later
+
+            index=Coordinates_.Nbasis(x_pos, y_pos, orb);
+
+            HamUpdatedNew_(index, index) += Parameters_.J_Hund[orb] * 
+                                        ( 
+                                        (cos(ei)) * 0.5 * MFParams_.Moment_Size[spin_no](x_pos, y_pos)
+                                        -
+                                        (cos(params_cell_old[0])) * 0.5 * params_cell_old[2]
+                                        );
+            
+            
+            HamUpdatedNew_(index + ncells_cluster*n_orbs_, index + ncells_cluster*n_orbs_) += Parameters_.J_Hund[orb] * (
+                                        (-cos(ei)) * 0.5 * MFParams_.Moment_Size[spin_no](x_pos, y_pos)
+                                        - (-cos(params_cell_old[0])) * 0.5 * params_cell_old[2]
+                                        );
+            HamUpdatedNew_(index, index + ncells_cluster*n_orbs_) += Parameters_.J_Hund[orb] * (
+                                        sin(ei) * complex<double>(cos(ai), -sin(ai)) * 0.5 * MFParams_.Moment_Size[spin_no](x_pos, y_pos)
+                                        - sin(params_cell_old[0]) * complex<double>(cos(params_cell_old[1]), -sin(params_cell_old[1])) * 0.5 * params_cell_old[2]
+                                        ); //S-
+            HamUpdatedNew_(index + ncells_cluster*n_orbs_, index) += Parameters_.J_Hund[orb] * (
+                                        sin(ei) * complex<double>(cos(ai), sin(ai)) * 0.5 * MFParams_.Moment_Size[spin_no](x_pos, y_pos)
+                                        - sin(params_cell_old[0]) * complex<double>(cos(params_cell_old[1]), sin(params_cell_old[1])) * 0.5 * params_cell_old[2]
+                                        );  //S+
+
+
+
+    HamCluster_ = HamUpdatedNew_;
+
+}
 
 void Hamiltonian::Check_up_down_symmetry()
 

@@ -27,8 +27,14 @@ LDFLAGS  = -lopenblas -ldl -lpthread -lm
 ### --- turn on for debugging -----------
 CPPFLAGS += -Isrc
 #CPPFLAGS += -Wall -Werror -Wextra #### This enables warnings with extra debugging
+
 #CPPFLAGS += -g3 #### link gdb to file system of program
+
+#CPPFLAGS += -pg
+#gprof sf gmon.out > profile_latest.txt
+
 CPPFLAGS += -O3 #### Reduce compilation time and make debugging produce the expected results.
+
 STRIP_COMMAND = true #### Keeps lines in the executable for debugging
 
 $(EXENAME): clean main.o 

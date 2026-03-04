@@ -20,8 +20,8 @@ Boltzman_constant=1.0
 RandomDisorderSeed=413
 Disorder_Strength=0.0
 
-J_Hund0=-4
-J_Hund1=-4
+J_Hund0=-6
+J_Hund1=-6
 
 
 OnSiteE0=0.0
@@ -58,11 +58,11 @@ NnBiquadratic_A=0.0
 Hopping_0X_0Y_row0=0 1
 Hopping_0X_0Y_row1=0 0
 
-Hopping_1X_0Y_row0=0.20 0
+Hopping_1X_0Y_row0=0.40 0
 Hopping_1X_0Y_row1=1 0
 
 Hopping_0X_1Y_row0=0 1
-Hopping_0X_1Y_row1=0 0.20
+Hopping_0X_1Y_row1=0 0.40
 
 Hopping_m1X_1Y_row0=0 1
 Hopping_m1X_1Y_row1=0 0
@@ -80,7 +80,15 @@ Temperature_min=0.01
 Temperature_max=0.1
 dTemperature=0.01
 
-Temperature_Values=36 10.0 8.0 6.0 4.0 3.0 2.0 1.0 0.9 0.8 0.7 0.6 0.5 0.4 0.3 0.2 0.1 0.09 0.08 0.07 0.06 0.05 0.04 0.03 0.02 0.01 0.009 0.008 0.007 0.006 0.005 0.004 0.003 0.002 0.001 0.0005 0.0001
+#this is around chemical potential
+omega_min_dos=-10.0
+omega_max_dos=10.0
+d_omega_dos=0.05
+eta_dos=0.05
+
+Temperature_Values=4 10.0 5.0 0.1 0.001
+
+#36 10.0 8.0 6.0 4.0 3.0 2.0 1.0 0.9 0.8 0.7 0.6 0.5 0.4 0.3 0.2 0.1 0.09 0.08 0.07 0.06 0.05 0.04 0.03 0.02 0.01 0.009 0.008 0.007 0.006 0.005 0.004 0.003 0.002 0.001 0.0005 0.0001
 #5 0.5 0.05 0.01 0.0001
 
 Temperature=0.0001

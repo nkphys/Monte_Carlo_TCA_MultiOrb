@@ -63,6 +63,12 @@ NoOfMicroscopicStates=50
     double WindowSize, AccCount[2];
     char Dflag;
 
+    /* density-of-states grid parameters read from input file */
+    double omega_min_dos;
+    double omega_max_dos;
+    double d_omega_dos;
+    double eta_dos;
+
     string InbuiltAnsatz;
 
     void Initialize(string inputfile_);
@@ -90,6 +96,12 @@ void Parameters::Initialize(string inputfile_)
     cout << "____________________________________" << endl;
     cout << "Reading the inputfile: " << inputfile_ << endl;
     cout << "____________________________________" << endl;
+
+    // initialize DOS grid settings in case they're absent in input
+    omega_min_dos = 0.0;
+    omega_max_dos = 0.0;
+    d_omega_dos   = 0.0;
+    eta_dos       = 0.0;
 
     monte_carlo_variables_ = matchstring2(inputfile_, "Monte_Carlo_variables");
 
@@ -173,6 +185,12 @@ void Parameters::Initialize(string inputfile_)
     }
 
     No_Of_Microscopic_States = int(matchstring(inputfile_, "NoOfMicroscopicStates"));
+
+    // read DOS grid settings (suffix _dos as requested)
+    omega_min_dos = matchstring(inputfile_, "omega_min_dos");
+    omega_max_dos = matchstring(inputfile_, "omega_max_dos");
+    d_omega_dos   = matchstring(inputfile_, "d_omega_dos");
+    eta_dos       = matchstring(inputfile_, "eta_dos");
 
     ns = lx * ly;
     cout << "TotalNumberOfSites = " << ns << endl;

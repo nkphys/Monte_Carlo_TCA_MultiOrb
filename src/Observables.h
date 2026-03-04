@@ -3,6 +3,7 @@
 #include "MFParams.h"
 #include "Hamiltonian.h"
 #include "tensor_type.h"
+#include <vector>
 
 #ifndef OBSERVABLES_H
 #define OBSERVABLES_H
@@ -29,9 +30,23 @@ public:
     void Calculate_Skw();
     void Calculate_Nw();
     void Get_Non_Interacting_dispersion();
-    double Lorentzian(double x, double brd);
+    inline double Lorentzian(double x, double brd);
     void TotalOccDensity();
     void DensityOfStates();
+    /**
+     * Build a DOS histogram array for the current microstate eigenspectrum.
+     *
+     * Parameter values are taken from the global `Parameters_` structure
+     * and are assumed to have been read from the input file.  The four
+     * parameters are named `omega_min_dos`, `omega_max_dos`,
+     * `d_omega_dos` and `eta_dos` to avoid clashes with other variables.
+     *
+     * The computed values are stored in the member vector `dos` and the
+     * spacing in `dosincr_`.  Use `Omega(i)` to convert a row index back to
+     * an energy.  The public method `DensityOfStates()` simply forwards to
+     * this helper.
+     */
+    void ComputeDOSArray();
     void Calculate_OrbResolved_Nw();
     void SiSjFULL();
     double fermi_function(int n);
@@ -43,10 +58,13 @@ public:
 
     void SiSjQ_Average();
     void SiSj_Average();
+    void DOS_Average();
     void Total_Energy_Average(double Curr_QuantE, double CurrE);
 
     void OccDensity(int tlabel);
-    void DOSprint(int tlabel);
+    void DOSprint(const std::string &label);
+    // backward‑compatible wrapper accepting integer labels
+    inline void DOSprint(int tlabel) { DOSprint(std::to_string(tlabel)); }
     complex<double> SiSjQ(int i, int j, int spin1, int spin2);
     double SiSj(int i, int j, int spin1, int spin2);
     double Omega(int i);
@@ -72,7 +90,10 @@ public:
     int lx_, ly_, ncells_, nbasis_;
     int n_orbs_, n_Spins_;
     double dosincr_, tpi_;
-    Matrix<double> dos;
+    std::vector<double> dos;    // density-of-states values (one column vector)
+    std::vector<double> dos_mean;            // running sum of DOS for averaging
+    std::vector<double> dos_square_mean;     // running sum of squared DOS values
+    int dos_count_;                          // number of microstates accumulated
     Mat_2_doub sx_, sy_, sz_;
     double AVG_Total_Energy, AVG_Total_Energy_sqr;
 
@@ -937,7 +958,7 @@ void Observables::Get_Non_Interacting_dispersion()
 {
 }
 
-double Observables::Lorentzian(double x, double brd)
+inline double Observables::Lorentzian(double x, double brd)
 {
     double temp;
 
@@ -948,11 +969,58 @@ double Observables::Lorentzian(double x, double brd)
 
 void Observables::DensityOfStates()
 {
-    //-----------Calculate Bandwidth------//
-    BandWidth = 2.0;
-    //-----------------------------------//
+    // ensure parameters are reasonable, fall back if input was missing
+    double omega_min = Parameters_.omega_min_dos;
+    double omega_max = Parameters_.omega_max_dos;
+    double d_omega   = Parameters_.d_omega_dos;
+    double eta       = Parameters_.eta_dos;
 
+    if (omega_max <= omega_min || d_omega <= 0) {
+        // fallback: use full eigenvalue range with coarse resolution
+        Parameters_.omega_min_dos = Hamiltonian_.eigs_[0] - 1.0;
+        Parameters_.omega_max_dos = Hamiltonian_.eigs_[Hamiltonian_.Ham_.n_row()-1] + 1.0;
+        Parameters_.d_omega_dos = 0.01;
+        Parameters_.eta_dos = 0.1;
+    }
+
+    // compute the array and leave results in `dos`
+    ComputeDOSArray();
+
+    // keep the bandwidth too in case somebody uses it
+    BandWidth = omega_max - omega_min;
 } // ----------
+
+
+// ------------------------------------------------------------------
+// helper that actually builds the DOS histogram array using the global
+// parameters stored in `Parameters_` (suffix `_dos` per request).
+void Observables::ComputeDOSArray()
+{
+    double omega_min = Parameters_.omega_min_dos;
+    double omega_max = Parameters_.omega_max_dos;
+    double d_omega   = Parameters_.d_omega_dos;
+    double eta       = Parameters_.eta_dos;
+
+    int omega_index_max = int((omega_max - omega_min) / d_omega);
+    if (omega_index_max <= 0) {
+        dos.clear();
+        dosincr_ = 0.0;
+        return;
+    }
+
+    dosincr_ = d_omega;
+    tpi_ = 2.0 * PI;
+    dos.assign(omega_index_max, 0.0);
+
+    for (int ii = 0; ii < omega_index_max; ii++) {
+        double omega = omega_min + ii * d_omega;
+        double sum = 0.0;
+        for (int n = 0; n < Hamiltonian_.Ham_.n_row(); n++) {
+            sum += Lorentzian(omega - Hamiltonian_.eigs_[n] - Parameters_.mus, eta);
+        }
+        dos[ii] = sum;
+    }
+}
 
 void Observables::OccDensity()
 {
@@ -1269,19 +1337,73 @@ void Observables::Total_Energy_Average(double Curr_QuantE, double CurrE)
 
 void Observables::OccDensity(int tlabel)
 {
-
+    // not implemented – placeholder in case future code needs it
 } // ----------
 
-void Observables::DOSprint(int tlabel)
+
+void Observables::DOS_Average()
 {
+    // accumulate current dos into running sums exactly like SiSj_Average
+    if (dos.empty()) {
+        // nothing computed yet
+        return;
+    }
 
+    if (dos_mean.size() != dos.size()) {
+        // first sample or size changed – reset accumulators
+        dos_mean = dos;
+        dos_square_mean.resize(dos.size());
+        for (std::size_t i = 0; i < dos.size(); ++i)
+            dos_square_mean[i] = dos[i] * dos[i];
+        dos_count_ = 1;
+    } else {
+        for (std::size_t i = 0; i < dos.size(); ++i) {
+            dos_mean[i] += dos[i];
+            dos_square_mean[i] += dos[i] * dos[i];
+        }
+        dos_count_++;
+    }
 } // ----------
+
+void Observables::DOSprint(const std::string &label)
+{
+    if (dos.empty()) {
+        std::cerr << "DOSprint called before DOS was computed\n";
+        return;
+    }
+
+    std::string fname = "DOS_" + label + ".txt";
+    std::ofstream fout(fname.c_str());
+    if (!fout) {
+        std::cerr << "Unable to open " << fname << " for writing\n";
+        return;
+    }
+
+    // decide whether to print the average or the current spectrum
+    bool use_avg = (dos_mean.size() == dos.size() && dos_count_ > 0);
+
+    for (std::size_t i = 0; i < dos.size(); ++i) {
+        double val;
+        if (use_avg) {
+            val = dos_mean[i] / double(dos_count_);
+        } else {
+            val = dos[i];
+        }
+        fout << Omega(static_cast<int>(i)) << "    " << val << "\n";
+    }
+}
 
 void Observables::Initialize()
 {
 
     complex<double> zero(0.0, 0.0);
     int space = 2 * ncells_ * n_orbs_;
+
+    // clear the DOS accumulators
+    dos.clear();
+    dos_mean.clear();
+    dos_square_mean.clear();
+    dos_count_ = 0;
 
     sx_.resize(n_Spins_);
     sy_.resize(n_Spins_);
@@ -1401,7 +1523,7 @@ void Observables::Initialize()
 
 double Observables::Omega(int i)
 {
-    return -20.0 + double(i) * dosincr_;
+    return Parameters_.omega_min_dos + double(i) * dosincr_;
 } // ----------
 
 #endif // OBSERVABLES_H

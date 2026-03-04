@@ -75,6 +75,10 @@ int main(int argc, char *argv[]) {
         double Classical_E=Hamiltonian_.GetCLEnergy();
         cout<<setprecision(9);
         cout<<"Total_Energy = "<<Quantum_E+Classical_E<<endl;
+        // compute and dump the non‑interacting density of states
+        Observables_.DensityOfStates();
+        Observables_.DOSprint(std::string("0"));
+
         //double mu = chemicalpotential(0.5, temp);
         // Observables_.Get_Non_Interacting_dispersion();
         //Hamiltonian_.Ham_.print();
@@ -127,6 +131,9 @@ int main(int argc, char *argv[]) {
         cout <<"Quantum_E = "<<QuantE<<endl;
 
         Observables_.Calculate_Nw();
+        // also demonstrate DOS computation if desired
+        Observables_.DensityOfStates();
+        Observables_.DOSprint(std::string("1"));
         //Observables_.Calculate_Akw();
         Observables_.Calculate_Akw_faster();
         Observables_.Calculate_Skw();

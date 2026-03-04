@@ -56,7 +56,8 @@ void MCEngine::RUN_MC()
     double Curr_QuantECluster;
     double Prev_QuantECluster;
     int x, y, act;
-    double saved_Params[6];
+    Mat_1_doub saved_Params;
+    saved_Params.resize(6);
 
     string File_Out_progress;
     string File_Out_theta_phi;
@@ -175,6 +176,10 @@ void MCEngine::RUN_MC()
 
         if(!Parameters_.IgnoreFermions){
             Hamiltonian_.InteractionsCreate();
+            if(ED_){
+               Hamiltonian_.HamUpdated_ = Hamiltonian_.Ham_; 
+            }
+
             Hamiltonian_.Diagonalize(Parameters_.Dflag);
 
             n_states_occupied_zeroT = Coordinates_.nbasis_*(Parameters_.Fill/(n_orbs_));
@@ -273,7 +278,12 @@ void MCEngine::RUN_MC()
                         }
 
                         if(!Parameters_.IgnoreFermions){
+                            if(!ED_){                            
                             Hamiltonian_.InteractionsClusterCreate(i);
+                            }
+                            else{
+                            Hamiltonian_.InteractionsUpdate(i, spin_no, saved_Params);
+                            }
                             Hamiltonian_.DiagonalizeCluster(Parameters_.Dflag);
                             Parameters_.mus_Cluster = Hamiltonian_.chemicalpotentialCluster(muu_prevCluster, (Parameters_.Fill/(n_orbs_*2.0)));
                             Curr_QuantECluster = Hamiltonian_.E_QMCluster();
@@ -343,6 +353,7 @@ void MCEngine::RUN_MC()
                                     Hamiltonian_.copy_eigs_Cluster(1);
                                     muu_prevCluster = Parameters_.mus_Cluster;
                                 }
+                            Hamiltonian_.HamUpdated_ = Hamiltonian_.HamUpdatedNew_;
                             }
                         }
 
@@ -438,6 +449,11 @@ void MCEngine::RUN_MC()
                 {
 
                     Observables_.SiSjFULL();
+
+                    // evaluate DOS for current microstate and add to running average
+                    Observables_.ComputeDOSArray();
+                    Observables_.DOS_Average();
+
                     Observables_.SiSjQ_Average();
                     Observables_.SiSj_Average();
                     //Observables_.calculate_quantum_SiSj();
@@ -447,7 +463,7 @@ void MCEngine::RUN_MC()
                     //Observables_.local_density_average();
 
                     //Just Classical Energy
-		    CurrE = Hamiltonian_.GetCLEnergy();
+		            CurrE = Hamiltonian_.GetCLEnergy();
 
                     if(!Parameters_.IgnoreFermions && ED_){
                     Observables_.Total_Energy_Average(Curr_QuantECluster, CurrE);
@@ -551,6 +567,21 @@ void MCEngine::RUN_MC()
             cout << "Final Quantum Energy[Full System] = " << Prev_QuantE << endl;
             cout << "Final Total Energy[Full System] = " << PrevE + Prev_QuantE << endl;
             cout << "Final mu=" << muu_prev << endl;
+
+            string Temp_val = "temp_" + string(temp_char);
+            Observables_.DOSprint(Temp_val);
+
+            // if we're iterating the outer temperature loop, the last index
+            // corresponds to the lowest temperature encountered (regardless of
+            // whether Parameters_.temp_min was explicitly set).  Use that
+            // to dump eigenvalues for the final Hamiltonian.
+            if (temp_point == (int)Parameters_.Temp_values.size() - 1) {
+                string eigfile = "eigs_" + Temp_val + ".txt";
+                ofstream fout(eigfile.c_str());
+                for (size_t n = 0; n < Hamiltonian_.eigs_.size(); ++n) {
+                    fout << Hamiltonian_.eigs_[n] << "\n";
+                }
+            }
         }
 
 
