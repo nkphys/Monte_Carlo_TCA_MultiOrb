@@ -87,6 +87,12 @@ void MCEngine::RUN_MC()
         Parameters_.temp = temp_;
         Parameters_.beta = double( 1.0/(Parameters_.Boltzman_constant*temp_));
 
+
+        Observables_.dos_mean.clear();
+        Observables_.dos_square_mean.clear();
+        Observables_.dos_count_ = 0;
+        
+
         for (int ix = 0; ix < lx_; ix++)
         {
             for (int iy = 0; iy < ly_; iy++)
