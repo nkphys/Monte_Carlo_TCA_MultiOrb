@@ -1,9 +1,0 @@
-Total 20 sweeps are performed.
-First 13 sweeps are used for thermalization and every 6 in last 7 sweeps are used for measurement.
-I_MC         S(0,1)         S(1,0)        S(Pi,0)           S(0,0)         S(Pi,Pi)     S(Pi/2,Pi/2)      < N_total >           E_CL           E_QM        E_Total             mu
-0            0.192018        0.419446       0.0289309        0.403324      0.00125112       0.0275021              32               0        -60.3151        -60.3151       -1.58054
-----------Measurement is started----------
-I_MC      Avg{S(pi,0)}    Avg{S(0,pi)}    std.dev{S(pi,0)}   std.dev{S(0,pi)}    Avg{q_S(pi,0)}    Avg{q_S(0,pi)}    std.dev{q_S(pi,0)}   std.dev{q_S(0,pi)}  Avg{S(1,0)}  Avg{S(0,1)}  std.dev{S(1,0)}  std.dev{S(0,1)}   Avg{E_classical}  std.dev{E_classical}   Avg.Filling
-13           0.0187916        0.050855               0               0               0               0               0               0         0.50268        0.318984               0               0        -60.3151               0
-              19             0.02601       0.0536206      0.00721831      0.00276564               0               0               0               0        0.478229        0.345617       0.0244508       0.0266338        -60.3151               0
-          Total 2 configurations were used were measurement
